@@ -52,8 +52,11 @@ class GetVideoControllerWithState extends ConsumerWidget {
   });
   final Widget Function(
     VideoPlayerState state,
-    VideoPlayerController controller,
-  ) builder;
+    VideoPlayerController controller, {
+    required Future<void> Function(Uri uri, {required bool autoPlay})?
+        onSetVideo,
+    Future<void> Function()? onResetVideo,
+  }) builder;
   final Widget Function(Object, StackTrace) errorBuilder;
   final Widget Function() loadingBuilder;
 
@@ -61,7 +64,18 @@ class GetVideoControllerWithState extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(videoPlayerStateProvider);
     return state.controllerAsync.when(
-      data: (controller) => builder(state, controller),
+      data: (controller) => builder(
+        state,
+        controller,
+        onResetVideo: () async => ref
+            .read(videoPlayerStateProvider.notifier)
+            .resetVideo(forced: true),
+        onSetVideo: (Uri uri, {required bool autoPlay}) async =>
+            ref.read(videoPlayerStateProvider.notifier).setVideo(
+                  uri,
+                  autoPlay: autoPlay,
+                ),
+      ),
       error: errorBuilder,
       loading: loadingBuilder,
     );

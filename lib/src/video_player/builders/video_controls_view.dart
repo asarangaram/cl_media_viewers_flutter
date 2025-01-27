@@ -3,29 +3,29 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
 import '../models/cl_icons.dart';
 import '../models/ext_duration.dart';
-import '../providers/video_player_state.dart';
 import 'audio_control_builder.dart';
 
-class VideoControlsView extends ConsumerStatefulWidget {
+class VideoControlsView extends StatefulWidget {
   const VideoControlsView({
     required this.controller,
     this.onHover,
+    this.onResetVideo,
     super.key,
   });
 
   final VideoPlayerController controller;
   final VoidCallback? onHover;
+  final Future<void> Function()? onResetVideo;
 
   @override
   VideoControlsState createState() => VideoControlsState();
 }
 
-class VideoControlsState extends ConsumerState<VideoControlsView> {
+class VideoControlsState extends State<VideoControlsView> {
   VideoPlayerValue get video => widget.controller.value;
   double? seekValue;
 
@@ -180,10 +180,11 @@ class VideoControlsState extends ConsumerState<VideoControlsView> {
     if (widget.controller.value.isCompleted) {
       final isLive = durationToDouble(video.duration) > 10 * 60 * 60;
       if (isLive) {
-        ref
-            .read(videoPlayerStateProvider.notifier)
-            .resetVideo(forced: true)
-            .then((val) => widget.controller.play());
+        if (widget.onResetVideo != null) {
+          widget.onResetVideo!().then((val) => widget.controller.play());
+        } else {
+          widget.controller.play();
+        }
       }
     }
 

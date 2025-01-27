@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:video_player/video_player.dart';
 
 import '../builders/audio_control_builder.dart';
@@ -7,7 +7,7 @@ import '../builders/timestamp_builder.dart';
 import '../models/cl_icons.dart';
 import '../models/ext_duration.dart';
 
-class VideoLayer extends ConsumerWidget {
+class VideoLayer extends StatelessWidget {
   const VideoLayer({
     required this.controller,
     this.inplaceControl = false,
@@ -21,7 +21,7 @@ class VideoLayer extends ConsumerWidget {
   final VoidCallback? onDoubleTap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return GestureDetector(
       onDoubleTap: onDoubleTap,
       onTap: onTap,
