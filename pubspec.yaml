@@ -7,7 +7,7 @@ environment:
   flutter: ">=1.17.0"
 
 dependencies:
-  extended_image: ^8.2.1
+  extended_image: ^9.1.0
   flutter:
     sdk: flutter
   flutter_riverpod: 2.5.1

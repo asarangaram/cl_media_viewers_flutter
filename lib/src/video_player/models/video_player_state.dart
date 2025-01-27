@@ -1,17 +1,15 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
 @immutable
 class VideoPlayerState {
-  final Uri? path;
-  final AsyncValue<VideoPlayerController> controllerAsync;
   const VideoPlayerState({
     this.path,
     this.controllerAsync = const AsyncValue.loading(),
   });
+  final Uri? path;
+  final AsyncValue<VideoPlayerController> controllerAsync;
 
   @override
   bool operator ==(covariant VideoPlayerState other) {
