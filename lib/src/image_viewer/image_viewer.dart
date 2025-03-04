@@ -7,14 +7,33 @@ class OverlayWidgets extends StatelessWidget {
   factory OverlayWidgets({
     required Widget child,
     required Alignment alignment,
+    double? widthFactor = 0.3,
+    double? heightFactor = 0.3,
+    BoxFit? fit,
+    Key? key,
+  }) {
+    return OverlayWidgets._(
+      alignment: alignment,
+      widthFactor: widthFactor,
+      heightFactor: heightFactor,
+      key: key,
+      fit: fit,
+      child: child,
+    );
+  }
+  factory OverlayWidgets.dimension({
+    required Widget child,
+    required Alignment alignment,
     double? sizeFactor = 0.3,
     Key? key,
+    BoxFit? fit,
   }) {
     return OverlayWidgets._(
       alignment: alignment,
       widthFactor: sizeFactor,
       heightFactor: sizeFactor,
       key: key,
+      fit: fit,
       child: child,
     );
   }
@@ -24,11 +43,13 @@ class OverlayWidgets extends StatelessWidget {
     super.key,
     this.widthFactor,
     this.heightFactor,
+    this.fit,
   });
   final Alignment alignment;
   final Widget child;
   final double? widthFactor;
   final double? heightFactor;
+  final BoxFit? fit;
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -36,7 +57,10 @@ class OverlayWidgets extends StatelessWidget {
       child: FractionallySizedBox(
         widthFactor: widthFactor,
         heightFactor: heightFactor,
-        child: FittedBox(child: child),
+        child: FittedBox(
+          fit: fit ?? BoxFit.contain,
+          child: child,
+        ),
       ),
     );
   }
@@ -45,9 +69,6 @@ class OverlayWidgets extends StatelessWidget {
 class ImageViewer extends StatelessWidget {
   factory ImageViewer.basic({
     required Uri uri,
-    required bool autoStart,
-    required bool autoPlay,
-    required bool isLocked,
     Widget? placeHolder,
     void Function({required bool lock})? onLockPage,
     Key? key,
@@ -57,9 +78,9 @@ class ImageViewer extends StatelessWidget {
     return ImageViewer._(
       key: key,
       uri: uri,
-      autoStart: autoStart,
-      autoPlay: autoPlay,
-      isLocked: isLocked,
+      autoStart: false,
+      autoPlay: false,
+      isLocked: false,
       onLockPage: onLockPage,
       placeHolder: placeHolder,
       fit: fit,
@@ -69,8 +90,6 @@ class ImageViewer extends StatelessWidget {
   }
   factory ImageViewer.guesture({
     required Uri uri,
-    required bool autoStart,
-    required bool autoPlay,
     required bool isLocked,
     Widget? placeHolder,
     void Function({required bool lock})? onLockPage,
@@ -81,8 +100,8 @@ class ImageViewer extends StatelessWidget {
     return ImageViewer._(
       key: key,
       uri: uri,
-      autoStart: autoStart,
-      autoPlay: autoPlay,
+      autoStart: false,
+      autoPlay: false,
       isLocked: isLocked,
       onLockPage: onLockPage,
       placeHolder: placeHolder,
