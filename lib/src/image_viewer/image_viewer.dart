@@ -150,7 +150,7 @@ class ImageViewer extends StatelessWidget {
       _ => ExtendedImage.network(
           uri.toString(),
           fit: fit ?? BoxFit.contain,
-          mode: ExtendedImageMode.gesture,
+          mode: mode,
           initGestureConfigHandler:
               hasGesture ? initGestureConfigHandler : null,
           cache: false,
