@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
 import '../models/video_player_state.dart';
 
+import '../providers/video_player_state.dart';
 import 'get_video_controller.dart';
 import 'video_layer.dart';
 
 enum PlayerServices { player, controlMenu, playStateBuilder }
 
-class VideoPlayer extends StatelessWidget {
+class VideoPlayer extends ConsumerWidget {
   const VideoPlayer({
     required this.uri,
     required this.autoStart,
@@ -31,7 +33,7 @@ class VideoPlayer extends StatelessWidget {
   final Widget Function() loadingBuilder;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     /* if (uri.scheme != 'file') {
       log("VideoPlayer can't play $uri");
       return Center(
@@ -41,7 +43,14 @@ class VideoPlayer extends StatelessWidget {
         ),
       );
     } */
-
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (context.mounted && autoStart) {
+        await ref.read(videoPlayerStateProvider.notifier).setVideo(
+              uri,
+              autoPlay: autoPlay,
+            );
+      }
+    });
     return GetVideoControllerWithState(
       builder: (
         VideoPlayerState state,
@@ -50,13 +59,13 @@ class VideoPlayer extends StatelessWidget {
             onSetVideo,
         Future<void> Function()? onResetVideo,
       }) {
-        if (onSetVideo != null) {
+        /* if (onSetVideo != null) {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (context.mounted && autoStart) {
               await onSetVideo(uri, autoPlay: autoPlay);
             }
           });
-        }
+        } */
         if (state.path == uri) {
           return VideoLayer(
             controller: controller,
