@@ -6,12 +6,13 @@ abstract class UriPlayControls {
 abstract class UniversalPlayControls {
   Future<void> setVideo(
     Uri uri, {
-    bool autoPlay = true,
-    bool forced = false,
+    required bool autoPlay,
+    required bool forced,
   });
   Future<void> resetVideo({
-    bool autoPlay = true,
-    bool forced = false,
+    required bool autoPlay,
   });
   Future<void> stopVideo();
+
+  Uri? get uri;
 }

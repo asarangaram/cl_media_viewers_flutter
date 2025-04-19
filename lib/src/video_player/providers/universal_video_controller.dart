@@ -14,18 +14,18 @@ class UniversalVideoControllerNotifier
 
   @override
   Future<void> resetVideo({
-    bool autoPlay = true,
-    bool forced = false,
+    required bool autoPlay,
   }) async {
-    await setVideo(state.path!, forced: true);
+    await setVideo(state.path!, autoPlay: autoPlay, forced: true);
   }
 
   @override
   Future<void> setVideo(
     Uri uri, {
-    bool autoPlay = true,
-    bool forced = false,
+    required bool autoPlay,
+    required bool forced,
   }) async {
+    print('Request to set URI: $uri');
     if (!forced && state.path == uri) return;
     state = UniversalVideoController(path: uri);
     try {
@@ -103,6 +103,9 @@ class UniversalVideoControllerNotifier
       super.dispose();
     }
   }
+
+  @override
+  Uri? get uri => state.path;
 }
 
 final universalVideoControllerProvider = StateNotifierProvider<
