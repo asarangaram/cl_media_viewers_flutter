@@ -172,7 +172,7 @@ class ImageViewer extends StatelessWidget {
                       aspectRatio: aspectRatio,
                       child: ExtendedImage(
                         image: state.imageProvider,
-                        fit: BoxFit.contain,
+                        fit: fit,
                         mode: mode,
                         initGestureConfigHandler:
                             hasGesture ? initGestureConfigHandler : null,
@@ -186,7 +186,7 @@ class ImageViewer extends StatelessWidget {
                       const Center(child: CircularProgressIndicator());
                 }
               : null,
-          fit: BoxFit.contain,
+          fit: fit,
           mode: mode,
           initGestureConfigHandler:
               hasGesture ? initGestureConfigHandler : null,
@@ -205,7 +205,7 @@ class ImageViewer extends StatelessWidget {
                       aspectRatio: aspectRatio,
                       child: ExtendedImage(
                         image: state.imageProvider,
-                        fit: BoxFit.contain,
+                        fit: fit,
                         mode: mode,
                         initGestureConfigHandler:
                             hasGesture ? initGestureConfigHandler : null,
@@ -219,7 +219,7 @@ class ImageViewer extends StatelessWidget {
                       const Center(child: CircularProgressIndicator());
                 }
               : null,
-          fit: fit ?? BoxFit.contain,
+          fit: fit,
           mode: mode,
           initGestureConfigHandler:
               hasGesture ? initGestureConfigHandler : null,

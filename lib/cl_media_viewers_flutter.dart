@@ -2,6 +2,7 @@
 library;
 
 export 'src/image_viewer/image_viewer.dart' show ImageViewer, OverlayWidgets;
+export 'src/media_viewer.dart' show MediaViewer;
 export 'src/video_player/builders/get_play_controls.dart'
     show GetUniversalVideoControls, GetUriVideoControls;
 export 'src/video_player/builders/get_uri_play_state.dart'

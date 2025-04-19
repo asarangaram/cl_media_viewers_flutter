@@ -13,6 +13,7 @@ class VideoPlayer extends ConsumerWidget {
     required this.placeHolder,
     required this.errorBuilder,
     required this.loadingBuilder,
+    required this.keepAspectRatio,
     super.key,
     this.onLockPage,
   });
@@ -21,6 +22,7 @@ class VideoPlayer extends ConsumerWidget {
   final bool autoPlay;
   final void Function({required bool lock})? onLockPage;
   final bool isLocked;
+  final bool keepAspectRatio;
 
   final Widget? placeHolder;
   final Widget Function(Object, StackTrace) errorBuilder;
@@ -32,11 +34,12 @@ class VideoPlayer extends ConsumerWidget {
     if (uriPlayController.controller == null) {
       return placeHolder ?? Container();
     }
-    return AspectRatio(
-      aspectRatio: uriPlayController.controller!.value.aspectRatio,
-      child: vplayer.VideoPlayer(
-        uriPlayController.controller!,
-      ),
-    );
+    if (keepAspectRatio) {
+      return AspectRatio(
+        aspectRatio: uriPlayController.controller!.value.aspectRatio,
+        child: vplayer.VideoPlayer(uriPlayController.controller!),
+      );
+    }
+    return vplayer.VideoPlayer(uriPlayController.controller!);
   }
 }
