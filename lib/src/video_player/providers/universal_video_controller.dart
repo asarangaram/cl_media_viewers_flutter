@@ -3,12 +3,16 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
-import '../models/video_player_state.dart';
+import '../models/universal_video_controller.dart';
+import '../models/uri_play_controls.dart';
 
-class VideoPlayerStateNotifier extends StateNotifier<VideoPlayerState> {
-  VideoPlayerStateNotifier() : super(const VideoPlayerState());
+class UniversalVideoControllerNotifier
+    extends StateNotifier<UniversalVideoController>
+    implements UniversalPlayControls {
+  UniversalVideoControllerNotifier() : super(const UniversalVideoController());
   VideoPlayerController? controller;
 
+  @override
   Future<void> resetVideo({
     bool autoPlay = true,
     bool forced = false,
@@ -16,13 +20,14 @@ class VideoPlayerStateNotifier extends StateNotifier<VideoPlayerState> {
     await setVideo(state.path!, forced: true);
   }
 
+  @override
   Future<void> setVideo(
     Uri uri, {
     bool autoPlay = true,
     bool forced = false,
   }) async {
     if (!forced && state.path == uri) return;
-    state = VideoPlayerState(path: uri);
+    state = UniversalVideoController(path: uri);
     try {
       if (controller != null) {
         await controller!.pause();
@@ -82,7 +87,7 @@ class VideoPlayerStateNotifier extends StateNotifier<VideoPlayerState> {
     if (path == state.path || path == null) {
       if (controller != null) {
         await controller!.pause();
-        state = const VideoPlayerState();
+        state = const UniversalVideoController();
         await controller!.dispose();
         controller = null;
       }
@@ -101,8 +106,8 @@ class VideoPlayerStateNotifier extends StateNotifier<VideoPlayerState> {
   }
 }
 
-final videoPlayerStateProvider =
-    StateNotifierProvider<VideoPlayerStateNotifier, VideoPlayerState>((ref) {
-  final notifier = VideoPlayerStateNotifier();
+final universalVideoControllerProvider = StateNotifierProvider<
+    UniversalVideoControllerNotifier, UniversalVideoController>((ref) {
+  final notifier = UniversalVideoControllerNotifier();
   return notifier;
 });

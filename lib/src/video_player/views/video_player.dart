@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:video_player/video_player.dart';
+import 'package:video_player/video_player.dart' as vplayer;
 
-import '../models/video_player_state.dart';
-
-import '../providers/video_player_state.dart';
-import 'get_video_controller.dart';
-import 'video_layer.dart';
-
-enum PlayerServices { player, controlMenu, playStateBuilder }
+import '../providers/uri_play_controller.dart';
 
 class VideoPlayer extends ConsumerWidget {
   const VideoPlayer({
@@ -34,48 +28,15 @@ class VideoPlayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    /* if (uri.scheme != 'file') {
-      log("VideoPlayer can't play $uri");
-      return Center(
-        child: SizedBox.square(
-          dimension: 64,
-          child: BrokenImage.show(),
-        ),
-      );
-    } */
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (context.mounted && autoStart) {
-        await ref.read(videoPlayerStateProvider.notifier).setVideo(
-              uri,
-              autoPlay: autoPlay,
-            );
-      }
-    });
-    return GetVideoControllerWithState(
-      builder: (
-        VideoPlayerState state,
-        VideoPlayerController controller, {
-        required Future<void> Function(Uri uri, {required bool autoPlay})?
-            onSetVideo,
-        Future<void> Function()? onResetVideo,
-      }) {
-        /* if (onSetVideo != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) async {
-            if (context.mounted && autoStart) {
-              await onSetVideo(uri, autoPlay: autoPlay);
-            }
-          });
-        } */
-        if (state.path == uri) {
-          return VideoLayer(
-            controller: controller,
-          );
-        } else {
-          return placeHolder ?? Container();
-        }
-      },
-      errorBuilder: errorBuilder,
-      loadingBuilder: loadingBuilder,
+    final uriPlayController = ref.watch(uriPlayControllerProvider(uri));
+    if (uriPlayController.controller == null) {
+      return placeHolder ?? Container();
+    }
+    return AspectRatio(
+      aspectRatio: uriPlayController.controller!.value.aspectRatio,
+      child: vplayer.VideoPlayer(
+        uriPlayController.controller!,
+      ),
     );
   }
 }
