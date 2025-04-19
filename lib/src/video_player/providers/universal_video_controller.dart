@@ -83,14 +83,13 @@ class UniversalVideoControllerNotifier
     }
   }
 
-  Future<void> stopVideo(Uri? path) async {
-    if (path == state.path || path == null) {
-      if (controller != null) {
-        await controller!.pause();
-        state = const UniversalVideoController();
-        await controller!.dispose();
-        controller = null;
-      }
+  @override
+  Future<void> stopVideo() async {
+    if (controller != null) {
+      await controller!.pause();
+      state = const UniversalVideoController();
+      await controller!.dispose();
+      controller = null;
     }
   }
 

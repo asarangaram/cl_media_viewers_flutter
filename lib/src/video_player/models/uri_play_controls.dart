@@ -13,4 +13,5 @@ abstract class UniversalPlayControls {
     bool autoPlay = true,
     bool forced = false,
   });
+  Future<void> stopVideo();
 }
