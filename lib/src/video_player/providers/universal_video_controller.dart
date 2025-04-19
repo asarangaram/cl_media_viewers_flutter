@@ -25,7 +25,6 @@ class UniversalVideoControllerNotifier
     required bool autoPlay,
     required bool forced,
   }) async {
-    print('Request to set URI: $uri');
     if (!forced && state.path == uri) return;
     state = UniversalVideoController(path: uri);
     try {
