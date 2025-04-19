@@ -2,24 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
+import '../models/video_controls.dart';
 import '../models/video_player_state.dart';
+import '../providers/video_controls.dart';
 import '../providers/video_player_state.dart';
-
-class VideoControls {
-  VideoControls({required this.play, required this.pause});
-  final Future<void> Function() play;
-  final Future<void> Function() pause;
-}
 
 class GetVideoController extends ConsumerWidget {
   const GetVideoController({
+    required this.uri,
     required this.builder,
     required this.errorBuilder,
     required this.loadingBuilder,
     super.key,
   });
+  final Uri uri;
   final Widget Function(
-    // VideoPlayerState state,
     VideoControls controller,
   ) builder;
   final Widget Function(Object, StackTrace) errorBuilder;
@@ -27,19 +24,8 @@ class GetVideoController extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(videoPlayerStateProvider);
-    return state.controllerAsync.when(
-      data: (controller) {
-        return builder(
-          VideoControls(
-            pause: controller.pause,
-            play: controller.play,
-          ),
-        );
-      },
-      error: errorBuilder,
-      loading: loadingBuilder,
-    );
+    final videoControl = ref.watch(videoControlProvider(uri).notifier);
+    return builder(videoControl);
   }
 }
 
