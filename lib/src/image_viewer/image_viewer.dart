@@ -69,6 +69,9 @@ class OverlayWidgets extends StatelessWidget {
 class ImageViewer extends StatelessWidget {
   factory ImageViewer.basic({
     required Uri uri,
+    required Widget? brokenImage,
+    required Widget? loadingWidget,
+    required bool keepAspectRatio,
     Widget? placeHolder,
     void Function({required bool lock})? onLockPage,
     Key? key,
@@ -86,11 +89,17 @@ class ImageViewer extends StatelessWidget {
       fit: fit,
       overlays: overlays,
       hasGesture: false,
+      brokenImage: brokenImage,
+      loadingWidget: loadingWidget,
+      keepAspectRatio: keepAspectRatio,
     );
   }
   factory ImageViewer.guesture({
     required Uri uri,
     required bool isLocked,
+    required Widget? brokenImage,
+    required Widget? loadingWidget,
+    required bool keepAspectRatio,
     Widget? placeHolder,
     void Function({required bool lock})? onLockPage,
     Key? key,
@@ -108,6 +117,9 @@ class ImageViewer extends StatelessWidget {
       fit: fit,
       overlays: overlays,
       hasGesture: true,
+      brokenImage: brokenImage,
+      loadingWidget: loadingWidget,
+      keepAspectRatio: keepAspectRatio,
     );
   }
   const ImageViewer._({
@@ -116,11 +128,14 @@ class ImageViewer extends StatelessWidget {
     required this.autoPlay,
     required this.isLocked,
     required this.hasGesture,
+    required this.brokenImage,
+    required this.loadingWidget,
+    required this.keepAspectRatio,
+    required this.overlays,
+    required this.onLockPage,
+    required this.placeHolder,
     super.key,
     this.fit,
-    this.overlays,
-    this.onLockPage,
-    this.placeHolder,
   });
 
   final Uri uri;
@@ -129,6 +144,9 @@ class ImageViewer extends StatelessWidget {
   final void Function({required bool lock})? onLockPage;
   final bool isLocked;
   final Widget? placeHolder;
+  final Widget? brokenImage;
+  final Widget? loadingWidget;
+  final bool keepAspectRatio;
 
   final BoxFit? fit;
   //final GestureConfig Function(ExtendedImageState)? gestureControl;
@@ -142,13 +160,65 @@ class ImageViewer extends StatelessWidget {
     final image = switch (uri.scheme) {
       'file' => ExtendedImage.file(
           File(uri.toFilePath()),
-          fit: fit ?? BoxFit.contain,
+          loadStateChanged: keepAspectRatio
+              ? (ExtendedImageState state) {
+                  if (state.extendedImageLoadState == LoadState.completed) {
+                    final imageInfo = state.extendedImageInfo;
+                    final width = imageInfo?.image.width.toDouble() ?? 1;
+                    final height = imageInfo?.image.height.toDouble() ?? 1;
+                    final aspectRatio = width / height;
+
+                    return AspectRatio(
+                      aspectRatio: aspectRatio,
+                      child: ExtendedImage(
+                        image: state.imageProvider,
+                        fit: BoxFit.contain,
+                        mode: mode,
+                        initGestureConfigHandler:
+                            hasGesture ? initGestureConfigHandler : null,
+                      ),
+                    );
+                  } else if (state.extendedImageLoadState == LoadState.failed) {
+                    return brokenImage ??
+                        const Center(child: Icon(Icons.error));
+                  }
+                  return loadingWidget ??
+                      const Center(child: CircularProgressIndicator());
+                }
+              : null,
+          fit: BoxFit.contain,
           mode: mode,
           initGestureConfigHandler:
               hasGesture ? initGestureConfigHandler : null,
         ),
       _ => ExtendedImage.network(
           uri.toString(),
+          loadStateChanged: keepAspectRatio
+              ? (ExtendedImageState state) {
+                  if (state.extendedImageLoadState == LoadState.completed) {
+                    final imageInfo = state.extendedImageInfo;
+                    final width = imageInfo?.image.width.toDouble() ?? 1;
+                    final height = imageInfo?.image.height.toDouble() ?? 1;
+                    final aspectRatio = width / height;
+
+                    return AspectRatio(
+                      aspectRatio: aspectRatio,
+                      child: ExtendedImage(
+                        image: state.imageProvider,
+                        fit: BoxFit.contain,
+                        mode: mode,
+                        initGestureConfigHandler:
+                            hasGesture ? initGestureConfigHandler : null,
+                      ),
+                    );
+                  } else if (state.extendedImageLoadState == LoadState.failed) {
+                    return brokenImage ??
+                        const Center(child: Icon(Icons.error));
+                  }
+                  return loadingWidget ??
+                      const Center(child: CircularProgressIndicator());
+                }
+              : null,
           fit: fit ?? BoxFit.contain,
           mode: mode,
           initGestureConfigHandler:
