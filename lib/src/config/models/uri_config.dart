@@ -2,8 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
-import 'persist_json.dart';
-
 @immutable
 class UriConfig {
   const UriConfig({
