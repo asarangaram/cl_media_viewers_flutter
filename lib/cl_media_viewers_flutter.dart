@@ -10,3 +10,10 @@ export 'src/video_player/builders/get_uri_play_state.dart'
 export 'src/video_player/models/uri_play_controls.dart'
     show UniversalPlayControls, UriPlayControls;
 export 'src/video_player/views/video_player.dart' show VideoPlayer;
+
+//Utils
+
+double durationToDouble(Duration duration) => duration.inSeconds.toDouble();
+
+Duration doubleToDuration(double position) =>
+    Duration(minutes: position ~/ 60, seconds: (position % 60).truncate());
