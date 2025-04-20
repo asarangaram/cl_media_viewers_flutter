@@ -25,65 +25,10 @@ class GetUriPlayStatus extends ConsumerWidget {
     if (uriPlayController.controller == null) {
       return builder(null, null);
     }
-    return GetUriPlayStatus0(
-      uri: uri,
-      uriPlayController: uriPlayController,
-      builder: builder,
-    );
-  }
-}
-
-class GetUriPlayStatus0 extends ConsumerStatefulWidget {
-  const GetUriPlayStatus0({
-    required this.uri,
-    required this.uriPlayController,
-    required this.builder,
-    super.key,
-  });
-  final Uri uri;
-  final UriPlayControllerNotifier uriPlayController;
-  final Widget Function(
-    UriPlayControls? uriPlayController,
-    VideoPlayerValue? videoplayerStatus,
-  ) builder;
-
-  @override
-  ConsumerState<ConsumerStatefulWidget> createState() =>
-      _GetUriPlayStatus0State();
-}
-
-class _GetUriPlayStatus0State extends ConsumerState<GetUriPlayStatus0> {
-  @override
-  void initState() {
-    widget.uriPlayController.controller?.addListener(_listener);
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    //widget.uriPlayController.controller?.removeListener(_listener);
-    super.dispose();
-  }
-
-  void _listener() {
-    final laskKnownPosition =
-        ref.read(uriConfigurationProvider(widget.uri)).lastKnownPlayPosition;
-    widget.uriPlayController.controller?.position.then((position) {
-      final diff = position! - laskKnownPosition;
-      if (diff > const Duration(seconds: 1)) {
-        ref.read(uriConfigurationProvider(widget.uri).notifier).update(
-              lastKnownPlayPosition: position,
-            );
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: widget.uriPlayController.controller!,
+      valueListenable: uriPlayController.controller!,
       builder: (context, value, child) {
-        return widget.builder(widget.uriPlayController, value);
+        return builder(uriPlayController, value);
       },
     );
   }

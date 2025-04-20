@@ -34,6 +34,7 @@ class UniversalVideoControllerNotifier
     try {
       if (controller != null) {
         await controller!.pause();
+        controller!.removeListener(timestampUpdater);
         await controller!.dispose();
       }
 
@@ -67,11 +68,27 @@ class UniversalVideoControllerNotifier
         if (autoPlay) {
           await controller!.play();
         }
-
+        controller!.addListener(timestampUpdater);
         state = state.copyWith(controllerAsync: AsyncValue.data(controller!));
       }
     } catch (error, stackTrace) {
       state = state.copyWith(controllerAsync: AsyncError(error, stackTrace));
+    }
+  }
+
+  void timestampUpdater() {
+    if (state.path != null) {
+      final uri = state.path!;
+      controller?.position.then((position) {
+        final laskKnownPosition =
+            ref.read(uriConfigurationProvider(uri)).lastKnownPlayPosition;
+        final diff = position! - laskKnownPosition;
+        if (diff > const Duration(seconds: 1)) {
+          ref.read(uriConfigurationProvider(uri).notifier).update(
+                lastKnownPlayPosition: position,
+              );
+        }
+      });
     }
   }
 
@@ -93,6 +110,7 @@ class UniversalVideoControllerNotifier
       if (controller?.value.isPlaying ?? false) {
         controller?.pause();
       }
+      controller!.removeListener(timestampUpdater);
       controller?.dispose();
       controller = null;
       super.dispose();
