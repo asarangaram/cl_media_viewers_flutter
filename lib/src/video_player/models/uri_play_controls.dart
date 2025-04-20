@@ -1,7 +1,7 @@
 abstract class UriPlayControls {
-  void play();
-  void pause();
-  void onPlayPause();
+  Future<void> play();
+  Future<void> pause();
+  Future<void> onPlayPause();
 }
 
 abstract class UniversalPlayControls {
