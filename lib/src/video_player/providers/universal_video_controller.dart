@@ -88,7 +88,6 @@ class UniversalVideoControllerNotifier
       await controller!.pause();
       state = const UniversalVideoController();
       await controller!.dispose();
-      controller = null;
     }
   }
 
@@ -99,6 +98,7 @@ class UniversalVideoControllerNotifier
         controller?.pause();
       }
       controller?.dispose();
+      controller = null;
       super.dispose();
     }
   }

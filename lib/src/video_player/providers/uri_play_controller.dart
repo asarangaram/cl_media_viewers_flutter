@@ -16,9 +16,35 @@ class UriPlayControllerNotifier extends StateNotifier<UriPlayController>
   VideoPlayerController? get controller => state.controller;
 
   @override
-  Future<void> play() async => state.controller?.play();
+  void play() => state.controller?.play();
+
   @override
-  Future<void> pause() async => state.controller?.pause();
+  Future<void>? pause() => state.controller?.pause();
+
+  @override
+  void onPlayPause() {
+    if (state.controller == null) {
+      return;
+    }
+    final videoplayerStatus = state.controller!.value;
+    if (videoplayerStatus.isCompleted) {
+      final isLive = (videoplayerStatus.duration.inSeconds) > 10 * 60 * 60;
+      if (isLive) {
+        ref
+            .read(universalVideoControllerProvider.notifier)
+            .setVideo(uri, autoPlay: true, forced: true)
+            .then((val) => play());
+      } else {
+        play();
+      }
+    }
+    // If the video is playing, pause it.
+    if (videoplayerStatus.isPlaying) {
+      pause();
+    } else {
+      play();
+    }
+  }
 }
 
 final uriPlayControllerProvider = StateNotifierProvider.family<
