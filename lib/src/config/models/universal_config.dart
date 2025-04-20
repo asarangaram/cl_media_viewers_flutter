@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 class UniversalConfiguration {
   const UniversalConfiguration({
     this.isAudioMuted = false,
-    this.lastKnownVolume = 0.0,
+    this.lastKnownVolume = 1.0,
   });
 
   factory UniversalConfiguration.fromMap(Map<String, dynamic> map) {
@@ -22,6 +22,8 @@ class UniversalConfiguration {
       );
   final bool isAudioMuted;
   final double lastKnownVolume;
+
+  double get audioVolume => isAudioMuted ? 0.0 : lastKnownVolume;
 
   UniversalConfiguration copyWith({
     bool? isAudioMuted,

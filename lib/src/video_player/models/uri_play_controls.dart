@@ -13,7 +13,12 @@ abstract class UniversalPlayControls {
   Future<void> resetVideo({
     required bool autoPlay,
   });
-  Future<void> stopVideo();
+  Future<void> removeVideo();
 
   Uri? get uri;
+
+  Future<void> onAdjustVolume(
+    double value,
+  );
+  Future<void> onToggleAudioMute();
 }

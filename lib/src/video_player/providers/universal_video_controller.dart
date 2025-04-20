@@ -3,13 +3,17 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../config/providers/universal_config.dart';
+import '../../config/providers/uri_config.dart';
 import '../models/universal_video_controller.dart';
 import '../models/uri_play_controls.dart';
 
 class UniversalVideoControllerNotifier
     extends StateNotifier<UniversalVideoController>
     implements UniversalPlayControls {
-  UniversalVideoControllerNotifier() : super(const UniversalVideoController());
+  UniversalVideoControllerNotifier(this.ref)
+      : super(const UniversalVideoController());
+  Ref ref;
   VideoPlayerController? controller;
 
   @override
@@ -26,13 +30,13 @@ class UniversalVideoControllerNotifier
     required bool forced,
   }) async {
     if (!forced && state.path == uri) return;
-    state = UniversalVideoController(path: uri);
+    state = state.copyWith(path: () => uri);
     try {
       if (controller != null) {
         await controller!.pause();
         await controller!.dispose();
       }
-      final VideoPlayerController newController;
+
       if (uri.scheme == 'file') {
         final path = uri.toFilePath();
         if (!File(path).existsSync()) {
@@ -40,53 +44,45 @@ class UniversalVideoControllerNotifier
         }
 
         controller = VideoPlayerController.file(File(path));
-        if (controller == null) {
-          throw Exception('Failed to create controller');
-        }
-        newController = controller!;
-        await newController.initialize();
-        if (!newController.value.isInitialized) {
-          throw Exception('Failed to load Video');
-        }
-
-        await newController.seekTo(Duration.zero);
-        if (autoPlay) {
-          await newController.play();
-        }
       } else if (['http', 'https'].contains(uri.scheme)) {
         controller = VideoPlayerController.networkUrl(
           uri,
           formatHint: VideoFormat.hls,
           videoPlayerOptions: VideoPlayerOptions(allowBackgroundPlayback: true),
         );
-        if (controller == null) {
-          throw Exception('Failed to create controller');
-        }
-        newController = controller!;
-        await newController.initialize();
-        if (!newController.value.isInitialized) {
-          throw Exception('Failed to load Video');
-        }
-
-        await newController.seekTo(Duration.zero);
-        if (autoPlay) {
-          await newController.play();
-        }
       } else {
         throw Exception('not supported');
       }
+      if (controller != null) {
+        await controller!.initialize();
+        if (!controller!.value.isInitialized) {
+          throw Exception('Failed to load Video');
+        }
+        await controller!.setVolume(
+          ref.read(universalConfigurationProvider).audioVolume,
+        );
+        await controller!.seekTo(
+          ref.read(uriConfigurationProvider(uri)).lastKnownPlayPosition,
+        );
+        if (autoPlay) {
+          await controller!.play();
+        }
 
-      state = state.copyWith(controllerAsync: AsyncValue.data(newController));
+        state = state.copyWith(controllerAsync: AsyncValue.data(controller!));
+      }
     } catch (error, stackTrace) {
       state = state.copyWith(controllerAsync: AsyncError(error, stackTrace));
     }
   }
 
   @override
-  Future<void> stopVideo() async {
+  Future<void> removeVideo() async {
     if (controller != null) {
       await controller!.pause();
-      state = const UniversalVideoController();
+      state = state.copyWith(
+        controllerAsync: const AsyncValue.loading(),
+        path: () => null,
+      );
       await controller!.dispose();
     }
   }
@@ -105,10 +101,37 @@ class UniversalVideoControllerNotifier
 
   @override
   Uri? get uri => state.path;
+
+  @override
+  Future<void> onAdjustVolume(
+    double value,
+  ) async {
+    final curr = ref.read(universalConfigurationProvider);
+    if (curr.lastKnownVolume != value) {
+      await ref
+          .read(universalConfigurationProvider.notifier)
+          .update(lastKnownVolume: value);
+    }
+    if (controller != null) {
+      await controller!.setVolume(value);
+    }
+  }
+
+  @override
+  Future<void> onToggleAudioMute() async {
+    final curr = ref.read(universalConfigurationProvider);
+    final mute = !curr.isAudioMuted;
+
+    await ref
+        .read(universalConfigurationProvider.notifier)
+        .update(isAudioMuted: mute);
+
+    await controller?.setVolume(mute ? 0 : curr.lastKnownVolume);
+  }
 }
 
 final universalVideoControllerProvider = StateNotifierProvider<
     UniversalVideoControllerNotifier, UniversalVideoController>((ref) {
-  final notifier = UniversalVideoControllerNotifier();
+  final notifier = UniversalVideoControllerNotifier(ref);
   return notifier;
 });

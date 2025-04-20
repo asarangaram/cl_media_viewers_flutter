@@ -5,9 +5,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
-import '../models/cl_icons.dart';
 import '../models/ext_duration.dart';
-import 'audio_control_builder.dart';
 
 class VideoControlsView extends StatefulWidget {
   const VideoControlsView({
@@ -139,22 +137,6 @@ class VideoControlsState extends State<VideoControlsView> {
               ],
               Row(
                 children: [
-                  IconButton(
-                    icon: Icon(
-                      video.isPlaying
-                          ? videoPlayerIcons.playerPause
-                          : videoPlayerIcons.playerPlay,
-                    ),
-                    onPressed: onPlayPause,
-                  ),
-                  AudioControlBuilder(
-                    controller: widget.controller,
-                    builder: (volume) => Icon(
-                      volume == 0
-                          ? videoPlayerIcons.audioMuted
-                          : videoPlayerIcons.audioUnmuted,
-                    ),
-                  ),
                   const Spacer(),
                   Flexible(
                     child: FittedBox(
