@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../config/providers/universal_config.dart';
 import '../../config/providers/uri_config.dart';
@@ -11,6 +12,8 @@ class UriPlayControllerNotifier extends StateNotifier<UriPlayController>
   UriPlayControllerNotifier(this.ref, super.state, {required this.uri});
   final Ref ref;
   final Uri uri;
+
+  VideoPlayerController? get controller => state.controller;
 
   @override
   Future<void> play() async => state.controller?.play();
