@@ -94,7 +94,6 @@ class VideoPlayerNotifier extends AutoDisposeAsyncNotifier<VideoPlayerState>
         final laskKnownPosition = uriConfig.lastKnownPlayPosition;
         final diff = (position! - laskKnownPosition).abs();
         if (diff > const Duration(seconds: 1)) {
-          print('Updating timestamp $position');
           ref.read(uriConfigurationProvider(uri).notifier).onChange(
                 lastKnownPlayPosition: position,
               );
