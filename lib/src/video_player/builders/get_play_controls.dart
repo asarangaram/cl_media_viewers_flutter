@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/uri_play_controls.dart';
-import '../providers/universal_video_controller.dart';
+import '../models/video_player_controls.dart';
+import '../providers/video_manager.dart';
 
-class GetUniversalVideoControls extends ConsumerWidget {
-  const GetUniversalVideoControls({required this.builder, super.key});
+class GetVideoPlayerControls extends ConsumerWidget {
+  const GetVideoPlayerControls({required this.builder, super.key});
   final Widget Function(
-    UniversalPlayControls controller,
+    VideoPlayerControls controls,
   ) builder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final control = ref.watch(universalVideoControllerProvider.notifier);
-    return builder(control);
+    final controls = ref.watch(videoPlayerProvider.notifier);
+    return builder(controls);
   }
 }

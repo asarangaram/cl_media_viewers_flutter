@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
-import '../providers/universal_video_controller.dart';
+import '../providers/video_manager.dart';
 
 class GetUriPlayStatus extends ConsumerWidget {
   const GetUriPlayStatus({
@@ -17,11 +17,11 @@ class GetUriPlayStatus extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final uriPlayControlAsync = ref.watch(universalVideoControllerProvider);
+    final uriPlayControlAsync = ref.watch(videoPlayerProvider);
 
     return uriPlayControlAsync.when(
       data: (uriPlayControl) {
-        if (uriPlayControl.controller == null) {
+        if (uriPlayControl.controller == null || uriPlayControl.path != uri) {
           return builder(null);
         }
         return ValueListenableBuilder(

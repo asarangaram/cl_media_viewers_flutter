@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 @immutable
-class UniversalVideoController {
-  const UniversalVideoController({
+class VideoPlayerState {
+  const VideoPlayerState({
     this.path,
     this.controller,
   });
@@ -13,7 +13,7 @@ class UniversalVideoController {
   final VideoPlayerController? controller;
 
   @override
-  bool operator ==(covariant UniversalVideoController other) {
+  bool operator ==(covariant VideoPlayerState other) {
     if (identical(this, other)) return true;
 
     return other.path == path && other.controller == controller;
@@ -22,11 +22,11 @@ class UniversalVideoController {
   @override
   int get hashCode => path.hashCode ^ controller.hashCode;
 
-  UniversalVideoController copyWith({
+  VideoPlayerState copyWith({
     ValueGetter<Uri?>? path,
     VideoPlayerController? controller,
   }) {
-    return UniversalVideoController(
+    return VideoPlayerState(
       path: path != null ? path.call() : this.path,
       controller: controller ?? this.controller,
     );

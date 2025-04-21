@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart' as vplayer;
 
-import '../providers/universal_video_controller.dart';
+import '../providers/video_manager.dart';
 
 class VideoPlayer extends ConsumerWidget {
   const VideoPlayer({
@@ -30,14 +30,8 @@ class VideoPlayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final controllerAsync = ref.watch(universalVideoControllerProvider);
-    print(
-      "Player is  ${controllerAsync.when(
-        data: (playControl) => 'playing ${playControl.path}',
-        error: (e, _) => ' in error $e',
-        loading: () => 'Loading',
-      )}",
-    );
+    final controllerAsync = ref.watch(videoPlayerProvider);
+
     return controllerAsync.when(
       data: (playControl) {
         if (playControl.path != uri || playControl.controller == null) {

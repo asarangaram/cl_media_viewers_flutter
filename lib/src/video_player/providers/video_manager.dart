@@ -5,18 +5,17 @@ import 'package:video_player/video_player.dart';
 
 import '../../config/providers/universal_config.dart';
 import '../../config/providers/uri_config.dart';
-import '../models/universal_video_controller.dart';
-import '../models/uri_play_controls.dart';
+import '../models/video_player_controls.dart';
+import '../models/video_player_state.dart';
 
-class UniversalVideoControllerNotifier
-    extends AutoDisposeAsyncNotifier<UniversalVideoController>
-    implements UniversalPlayControls {
-  UniversalVideoControllerNotifier();
+class VideoPlayerNotifier extends AutoDisposeAsyncNotifier<VideoPlayerState>
+    implements VideoPlayerControls {
+  VideoPlayerNotifier();
 
   @override
-  Future<UniversalVideoController> build() async {
+  Future<VideoPlayerState> build() async {
     ref.onDispose(dispose);
-    return const UniversalVideoController();
+    return const VideoPlayerState();
   }
 
   Future<void> dispose() async {
@@ -78,7 +77,7 @@ class UniversalVideoControllerNotifier
       }
       controller.addListener(timestampUpdater);
       state = AsyncValue.data(
-        UniversalVideoController(controller: controller, path: uri),
+        VideoPlayerState(controller: controller, path: uri),
       );
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -107,7 +106,7 @@ class UniversalVideoControllerNotifier
   @override
   Future<void> removeVideo() async {
     final controller = state.value?.controller;
-    state = const AsyncData(UniversalVideoController());
+    state = const AsyncData(VideoPlayerState());
     state = const AsyncValue.loading();
 
     if (controller != null) {
@@ -134,7 +133,7 @@ class UniversalVideoControllerNotifier
         final isLive = (videoplayerStatus.duration.inSeconds) > 10 * 60 * 60;
         if (isLive) {
           await ref
-              .read(universalVideoControllerProvider.notifier)
+              .read(videoPlayerProvider.notifier)
               .resetVideo(autoPlay: autoPlay);
         }
         await play();
@@ -181,6 +180,7 @@ class UniversalVideoControllerNotifier
   }
 }
 
-final universalVideoControllerProvider = AsyncNotifierProvider.autoDispose<
-    UniversalVideoControllerNotifier,
-    UniversalVideoController>(UniversalVideoControllerNotifier.new);
+final videoPlayerProvider =
+    AsyncNotifierProvider.autoDispose<VideoPlayerNotifier, VideoPlayerState>(
+  VideoPlayerNotifier.new,
+);

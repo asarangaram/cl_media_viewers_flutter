@@ -1,6 +1,4 @@
-abstract class UriPlayControls {}
-
-abstract class UniversalPlayControls {
+abstract class VideoPlayerControls {
   Future<void> setVideo(
     Uri uri, {
     required bool autoPlay,
