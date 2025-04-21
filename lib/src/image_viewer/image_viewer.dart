@@ -2,6 +2,9 @@ import 'dart:io';
 
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../config/providers/uri_config.dart';
 
 class OverlayWidgets extends StatelessWidget {
   factory OverlayWidgets({
@@ -160,32 +163,27 @@ class ImageViewer extends StatelessWidget {
     final image = switch (uri.scheme) {
       'file' => ExtendedImage.file(
           File(uri.toFilePath()),
-          loadStateChanged: keepAspectRatio
-              ? (ExtendedImageState state) {
-                  if (state.extendedImageLoadState == LoadState.completed) {
-                    final imageInfo = state.extendedImageInfo;
-                    final width = imageInfo?.image.width.toDouble() ?? 1;
-                    final height = imageInfo?.image.height.toDouble() ?? 1;
-                    final aspectRatio = width / height;
-
-                    return AspectRatio(
-                      aspectRatio: aspectRatio,
-                      child: ExtendedImage(
-                        image: state.imageProvider,
-                        fit: fit,
-                        mode: mode,
-                        initGestureConfigHandler:
-                            hasGesture ? initGestureConfigHandler : null,
-                      ),
-                    );
-                  } else if (state.extendedImageLoadState == LoadState.failed) {
-                    return brokenImage ??
-                        const Center(child: Icon(Icons.error));
-                  }
-                  return loadingWidget ??
-                      const Center(child: CircularProgressIndicator());
-                }
-              : null,
+          loadStateChanged: (ExtendedImageState state) {
+            if (state.extendedImageLoadState == LoadState.completed) {
+              return AspectRatioAware(
+                state: state,
+                image: state.imageProvider,
+                uri: uri,
+                fit: fit,
+                mode: mode,
+                initGestureConfigHandler: initGestureConfigHandler,
+                brokenImage:
+                    brokenImage ?? const Center(child: Icon(Icons.error)),
+                loadingWidget: loadingWidget ??
+                    const Center(child: CircularProgressIndicator()),
+                keepAspectRatio: keepAspectRatio,
+              );
+            } else if (state.extendedImageLoadState == LoadState.failed) {
+              return brokenImage ?? const Center(child: Icon(Icons.error));
+            }
+            return loadingWidget ??
+                const Center(child: CircularProgressIndicator());
+          },
           fit: fit,
           mode: mode,
           initGestureConfigHandler:
@@ -193,32 +191,27 @@ class ImageViewer extends StatelessWidget {
         ),
       _ => ExtendedImage.network(
           uri.toString(),
-          loadStateChanged: keepAspectRatio
-              ? (ExtendedImageState state) {
-                  if (state.extendedImageLoadState == LoadState.completed) {
-                    final imageInfo = state.extendedImageInfo;
-                    final width = imageInfo?.image.width.toDouble() ?? 1;
-                    final height = imageInfo?.image.height.toDouble() ?? 1;
-                    final aspectRatio = width / height;
-
-                    return AspectRatio(
-                      aspectRatio: aspectRatio,
-                      child: ExtendedImage(
-                        image: state.imageProvider,
-                        fit: fit,
-                        mode: mode,
-                        initGestureConfigHandler:
-                            hasGesture ? initGestureConfigHandler : null,
-                      ),
-                    );
-                  } else if (state.extendedImageLoadState == LoadState.failed) {
-                    return brokenImage ??
-                        const Center(child: Icon(Icons.error));
-                  }
-                  return loadingWidget ??
-                      const Center(child: CircularProgressIndicator());
-                }
-              : null,
+          loadStateChanged: (ExtendedImageState state) {
+            if (state.extendedImageLoadState == LoadState.completed) {
+              return AspectRatioAware(
+                state: state,
+                image: state.imageProvider,
+                uri: uri,
+                fit: fit,
+                mode: mode,
+                initGestureConfigHandler: initGestureConfigHandler,
+                brokenImage:
+                    brokenImage ?? const Center(child: Icon(Icons.error)),
+                loadingWidget: loadingWidget ??
+                    const Center(child: CircularProgressIndicator()),
+                keepAspectRatio: keepAspectRatio,
+              );
+            } else if (state.extendedImageLoadState == LoadState.failed) {
+              return brokenImage ?? const Center(child: Icon(Icons.error));
+            }
+            return loadingWidget ??
+                const Center(child: CircularProgressIndicator());
+          },
           fit: fit,
           mode: mode,
           initGestureConfigHandler:
@@ -248,6 +241,130 @@ class ImageViewer extends StatelessWidget {
         if (details?.totalScale == null) return;
         onLockPage?.call(lock: details!.totalScale! > 1.0);
       },
+    );
+  }
+}
+
+class ViewModifiedImage extends ConsumerWidget {
+  const ViewModifiedImage({
+    required this.image,
+    required this.uri,
+    required this.brokenImage,
+    required this.loadingWidget,
+    super.key,
+    this.fit,
+    this.mode,
+    this.initGestureConfigHandler,
+  });
+  final Uri uri;
+  final ImageProvider<Object> image;
+  final BoxFit? fit;
+  final ExtendedImageMode? mode;
+  final GestureConfig Function(ExtendedImageState)? initGestureConfigHandler;
+  final Widget brokenImage;
+  final Widget loadingWidget;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final uriConfigAsync = ref.watch(uriConfigurationProvider(uri));
+
+    return uriConfigAsync.when(
+      data: (uriConfig) {
+        return RotatedBox(
+          quarterTurns: uriConfig.quarterTurns,
+          child: ExtendedImage(
+            image: image,
+            fit: fit,
+            mode: mode ?? ExtendedImageMode.none,
+            initGestureConfigHandler: initGestureConfigHandler,
+          ),
+        );
+      },
+      error: (_, __) => brokenImage,
+      loading: () => loadingWidget,
+    );
+
+    /* return uriConfigAsync.when(
+      data: (uriConfig) => controllerAsync.when(
+        data: (playControl) {
+          if (playControl.path != uri || playControl.controller == null) {
+            return placeHolder ?? Container();
+          }
+          print('uriConfig.quarterTurns: ${uriConfig.quarterTurns}');
+          final controller = playControl.controller;
+          if (keepAspectRatio) {
+            return AspectRatio(
+              aspectRatio: uriConfig.quarterTurns.isEven
+                  ? controller.value.aspectRatio
+                  : 1 / controller.value.aspectRatio,
+              child: RotatedBox(
+                quarterTurns: uriConfig.quarterTurns,
+                child: vplayer.VideoPlayer(controller),
+              ),
+            );
+          }
+          return vplayer.VideoPlayer(controller);
+        },
+        error: errorBuilder,
+        loading: loadingBuilder,
+      ),
+      error: errorBuilder,
+      loading: loadingBuilder,
+    ); */
+  }
+}
+
+class AspectRatioAware extends ConsumerWidget {
+  const AspectRatioAware({
+    required this.image,
+    required this.uri,
+    required this.brokenImage,
+    required this.loadingWidget,
+    required this.state,
+    required this.keepAspectRatio,
+    super.key,
+    this.fit,
+    this.mode,
+    this.initGestureConfigHandler,
+  });
+  final Uri uri;
+  final ImageProvider<Object> image;
+  final BoxFit? fit;
+  final ExtendedImageMode? mode;
+  final GestureConfig Function(ExtendedImageState)? initGestureConfigHandler;
+  final Widget brokenImage;
+  final Widget loadingWidget;
+  final bool keepAspectRatio;
+  final ExtendedImageState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!keepAspectRatio) {
+      return ViewModifiedImage(
+        image: image,
+        uri: uri,
+        fit: fit,
+        mode: mode,
+        initGestureConfigHandler: initGestureConfigHandler,
+        brokenImage: brokenImage,
+        loadingWidget: loadingWidget,
+      );
+    }
+    final imageInfo = state.extendedImageInfo;
+    final width = imageInfo?.image.width.toDouble() ?? 1;
+    final height = imageInfo?.image.height.toDouble() ?? 1;
+    final aspectRatio = width / height;
+
+    return AspectRatio(
+      aspectRatio: aspectRatio,
+      child: ViewModifiedImage(
+        image: image,
+        uri: uri,
+        fit: fit,
+        mode: mode,
+        initGestureConfigHandler: initGestureConfigHandler,
+        brokenImage: brokenImage,
+        loadingWidget: loadingWidget,
+      ),
     );
   }
 }

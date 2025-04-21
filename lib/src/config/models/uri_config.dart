@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 class UriConfig {
   const UriConfig({
     this.lastKnownPlayPosition = Duration.zero,
-    this.quarterTurns = 0,
+    this.quarterTurns = 1,
   });
 
   factory UriConfig.fromMap(Map<String, dynamic> map) {
