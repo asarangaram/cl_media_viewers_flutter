@@ -23,4 +23,6 @@ abstract class VideoPlayerControls {
     double value,
   );
   Future<void> onToggleAudioMute();
+
+  Future<void> seekTo(Duration position);
 }

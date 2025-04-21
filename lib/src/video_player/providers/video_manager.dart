@@ -178,6 +178,14 @@ class VideoPlayerNotifier extends AutoDisposeAsyncNotifier<VideoPlayerState>
       await controller.setVolume(mute ? 0 : curr.lastKnownVolume);
     }
   }
+
+  @override
+  Future<void> seekTo(Duration position) async {
+    if (state.value?.controller != null) {
+      final controller = state.value!.controller!;
+      await controller.seekTo(position);
+    }
+  }
 }
 
 final videoPlayerProvider =
