@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
-import '../models/uri_play_controls.dart';
-import '../providers/uri_play_controller.dart';
+import '../providers/universal_video_controller.dart';
 
 class GetUriPlayStatus extends ConsumerWidget {
   const GetUriPlayStatus({
@@ -13,28 +12,27 @@ class GetUriPlayStatus extends ConsumerWidget {
   });
   final Uri uri;
   final Widget Function(
-    UriPlayControls? uriPlayController,
     VideoPlayerValue? videoplayerStatus,
   ) builder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final uriPlayControlAsync = ref.watch(uriPlayControllerProvider(uri));
-    final notifier = ref.watch(uriPlayControllerProvider(uri).notifier);
+    final uriPlayControlAsync = ref.watch(universalVideoControllerProvider);
+
     return uriPlayControlAsync.when(
       data: (uriPlayControl) {
         if (uriPlayControl.controller == null) {
-          return builder(null, null);
+          return builder(null);
         }
         return ValueListenableBuilder(
           valueListenable: uriPlayControl.controller!,
           builder: (context, value, child) {
-            return builder(notifier, value);
+            return builder(value);
           },
         );
       },
-      error: (_, __) => builder(null, null),
-      loading: () => builder(null, null),
+      error: (_, __) => builder(null),
+      loading: () => builder(null),
     );
   }
 }

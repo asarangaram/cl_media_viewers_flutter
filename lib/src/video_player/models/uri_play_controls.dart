@@ -1,11 +1,4 @@
-abstract class UriPlayControls {
-  Future<void> play();
-  Future<void> pause();
-  Future<void> onPlayPause({
-    required bool autoPlay,
-    required bool forced,
-  });
-}
+abstract class UriPlayControls {}
 
 abstract class UniversalPlayControls {
   Future<void> setVideo(
@@ -16,6 +9,14 @@ abstract class UniversalPlayControls {
   Future<void> resetVideo({
     required bool autoPlay,
   });
+
+  Future<void> play();
+  Future<void> pause();
+  Future<void> onPlayPause({
+    required bool autoPlay,
+    required bool forced,
+  });
+
   Future<void> removeVideo();
 
   Uri? get uri;

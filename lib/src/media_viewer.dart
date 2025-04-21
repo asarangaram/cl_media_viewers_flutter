@@ -14,9 +14,9 @@ class MediaViewer extends StatelessWidget {
     required this.mime,
     required this.previewUri,
     required this.brokenImage,
-    required this.loadWidget,
     required this.decoration,
     required this.keepAspectRatio,
+    this.loadWidget,
     super.key,
   });
 
@@ -29,7 +29,7 @@ class MediaViewer extends StatelessWidget {
   final String heroTag;
   final String mime;
   final Widget brokenImage;
-  final Widget loadWidget;
+  final Widget? loadWidget;
   final Decoration? Function()? decoration;
   final bool keepAspectRatio;
 
@@ -67,12 +67,53 @@ class MediaViewer extends StatelessWidget {
                       keepAspectRatio: keepAspectRatio,
                     ),
               errorBuilder: (_, __) => brokenImage,
-              loadingBuilder: () => loadWidget,
+              loadingBuilder: () =>
+                  loadWidget ??
+                  LoadWidgetDefault(
+                    previewUri: previewUri,
+                    brokenImage: brokenImage,
+                    loadWidget: loadWidget,
+                    keepAspectRatio: keepAspectRatio,
+                  ),
               keepAspectRatio: keepAspectRatio,
             ),
           _ => brokenImage,
         },
       ),
+    );
+  }
+}
+
+class LoadWidgetDefault extends StatelessWidget {
+  const LoadWidgetDefault({
+    required this.previewUri,
+    required this.brokenImage,
+    required this.loadWidget,
+    required this.keepAspectRatio,
+    super.key,
+  });
+
+  final Uri? previewUri;
+  final Widget brokenImage;
+  final Widget? loadWidget;
+  final bool keepAspectRatio;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        if (previewUri != null)
+          ImageViewer.basic(
+            uri: previewUri!,
+            brokenImage: brokenImage,
+            loadingWidget: null,
+            keepAspectRatio: keepAspectRatio,
+          ),
+        const CircularProgressIndicator(
+          color: Colors.white,
+        ),
+      ],
     );
   }
 }

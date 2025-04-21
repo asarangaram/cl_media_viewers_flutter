@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart' as vplayer;
 
-import '../providers/uri_play_controller.dart';
+import '../providers/universal_video_controller.dart';
 
 class VideoPlayer extends ConsumerWidget {
   const VideoPlayer({
@@ -30,20 +30,27 @@ class VideoPlayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final uriPlayControllerAsync = ref.watch(uriPlayControllerProvider(uri));
-    print('Rebuild VideoPlayer');
-    return uriPlayControllerAsync.when(
-      data: (uriPlayController) {
-        if (uriPlayController.controller == null) {
+    final controllerAsync = ref.watch(universalVideoControllerProvider);
+    print(
+      "Player is  ${controllerAsync.when(
+        data: (playControl) => 'playing ${playControl.path}',
+        error: (e, _) => ' in error $e',
+        loading: () => 'Loading',
+      )}",
+    );
+    return controllerAsync.when(
+      data: (playControl) {
+        if (playControl.path != uri || playControl.controller == null) {
           return placeHolder ?? Container();
         }
+        final controller = playControl.controller!;
         if (keepAspectRatio) {
           return AspectRatio(
-            aspectRatio: uriPlayController.controller!.value.aspectRatio,
-            child: vplayer.VideoPlayer(uriPlayController.controller!),
+            aspectRatio: controller.value.aspectRatio,
+            child: vplayer.VideoPlayer(controller),
           );
         }
-        return vplayer.VideoPlayer(uriPlayController.controller!);
+        return vplayer.VideoPlayer(controller);
       },
       error: errorBuilder,
       loading: loadingBuilder,

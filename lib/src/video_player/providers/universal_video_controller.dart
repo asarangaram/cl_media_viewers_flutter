@@ -20,8 +20,9 @@ class UniversalVideoControllerNotifier
   }
 
   Future<void> dispose() async {
-    final controller = state.value!.controller;
-    await controller!.pause();
+    final controller = state.value?.controller;
+    if (controller == null) return;
+    await controller.pause();
     controller.removeListener(timestampUpdater);
     await controller.dispose();
   }
@@ -30,7 +31,9 @@ class UniversalVideoControllerNotifier
   Future<void> resetVideo({
     required bool autoPlay,
   }) async {
-    await setVideo(state.value!.path!, autoPlay: autoPlay, forced: true);
+    if (state.value?.path != null) {
+      await setVideo(state.value!.path!, autoPlay: autoPlay, forced: true);
+    }
   }
 
   @override
@@ -39,14 +42,9 @@ class UniversalVideoControllerNotifier
     required bool autoPlay,
     required bool forced,
   }) async {
-    if (!forced && state.value!.path == uri) return;
-    if (state.value!.controller != null) {
-      final controller = state.value!.controller;
-      await controller!.pause();
-      controller.removeListener(timestampUpdater);
-      await controller.dispose();
-    }
-    state = const AsyncValue.loading();
+    if (!forced && state.value?.path == uri) return;
+    await removeVideo();
+
     try {
       VideoPlayerController? controller;
 
@@ -80,7 +78,7 @@ class UniversalVideoControllerNotifier
       }
       controller.addListener(timestampUpdater);
       state = AsyncValue.data(
-        state.value!.copyWith(controller: controller, path: () => uri),
+        UniversalVideoController(controller: controller, path: uri),
       );
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -97,6 +95,7 @@ class UniversalVideoControllerNotifier
         final laskKnownPosition = uriConfig.lastKnownPlayPosition;
         final diff = (position! - laskKnownPosition).abs();
         if (diff > const Duration(seconds: 1)) {
+          print('Updating timestamp $position');
           ref.read(uriConfigurationProvider(uri).notifier).onChange(
                 lastKnownPlayPosition: position,
               );
@@ -107,16 +106,50 @@ class UniversalVideoControllerNotifier
 
   @override
   Future<void> removeVideo() async {
-    if (state.value?.controller != null) {
-      final controller = state.value!.controller!;
+    final controller = state.value?.controller;
+    state = const AsyncData(UniversalVideoController());
+    state = const AsyncValue.loading();
+
+    if (controller != null) {
       await controller.pause();
-      state = const AsyncValue.loading();
+      controller.removeListener(timestampUpdater);
       await controller.dispose();
     }
   }
 
   @override
-  Uri? get uri => state.value!.path;
+  Future<void> play() async => state.value?.controller?.play();
+
+  @override
+  Future<void> pause() async => state.value?.controller?.pause();
+  @override
+  Future<void> onPlayPause({
+    required bool autoPlay,
+    required bool forced,
+  }) async {
+    if (state.value?.controller != null) {
+      final controller = state.value!.controller!;
+      final videoplayerStatus = controller.value;
+      if (videoplayerStatus.isCompleted) {
+        final isLive = (videoplayerStatus.duration.inSeconds) > 10 * 60 * 60;
+        if (isLive) {
+          await ref
+              .read(universalVideoControllerProvider.notifier)
+              .resetVideo(autoPlay: autoPlay);
+        }
+        await play();
+      }
+
+      if (videoplayerStatus.isPlaying) {
+        await pause();
+      } else {
+        await play();
+      }
+    }
+  }
+
+  @override
+  Uri? get uri => state.value?.path;
 
   @override
   Future<void> onAdjustVolume(double value) async {
@@ -127,7 +160,7 @@ class UniversalVideoControllerNotifier
           .read(universalConfigProvider.notifier)
           .onChange(lastKnownVolume: value, isAudioMuted: value != 0);
     }
-    if (state.value!.controller != null) {
+    if (state.value?.controller != null) {
       final controller = state.value!.controller!;
       await controller.setVolume(curr.lastKnownVolume);
     }
@@ -141,7 +174,7 @@ class UniversalVideoControllerNotifier
     await ref
         .read(universalConfigProvider.notifier)
         .onChange(isAudioMuted: mute);
-    if (state.value!.controller != null) {
+    if (state.value?.controller != null) {
       final controller = state.value!.controller!;
       await controller.setVolume(mute ? 0 : curr.lastKnownVolume);
     }
