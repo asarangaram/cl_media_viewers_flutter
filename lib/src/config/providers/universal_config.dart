@@ -1,45 +1,42 @@
 import 'package:cl_media_viewers_flutter/src/config/models/universal_config.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/persist_json.dart';
+import 'persist_json.dart';
 
-class UniversalConfigNotifier extends StateNotifier<UniversalConfiguration> {
-  UniversalConfigNotifier([this.store])
-      : super(const UniversalConfiguration()) {
-    initialize();
-  }
-  final PersistJson? store;
-  final String storeKey = 'MediaViewer: UniversalConfiguration';
-  Future<void> initialize() async {
-    if (store != null) {
-      state = UniversalConfiguration.fromJson(
-        await store!.loadJson(
-          storeKey,
-          const UniversalConfiguration().toJson(),
-        ),
-      );
-    }
+class UniversalConfigNotifier extends AsyncNotifier<UniversalConfiguration> {
+  UniversalConfigNotifier();
+
+  final String storeKey = 'UniversalConfiguration';
+
+  @override
+  Future<UniversalConfiguration> build() async {
+    final store = await ref.watch(internalJSONStoreprovider.future);
+    final json = await store.load(
+      storeKey,
+      const UniversalConfiguration().toJson(),
+    );
+    return UniversalConfiguration.fromJson(json);
   }
 
-  Future<void> update({
+  Future<void> onChange({
     bool? isAudioMuted,
     double? lastKnownVolume,
   }) async {
+    final store = await ref.read(internalJSONStoreprovider.future);
     final volume =
         lastKnownVolume != null && lastKnownVolume <= 0 ? 1.0 : lastKnownVolume;
 
-    state = state.copyWith(
-      isAudioMuted: isAudioMuted,
-      lastKnownVolume: volume,
+    state = AsyncValue.data(
+      state.value!.copyWith(
+        isAudioMuted: isAudioMuted,
+        lastKnownVolume: volume,
+      ),
     );
-    if (store != null) {
-      await store!.saveJson(storeKey, state.toJson());
-    }
+    await store.save(storeKey, state.value!.toJson());
   }
 }
 
-final universalConfigurationProvider =
-    StateNotifierProvider<UniversalConfigNotifier, UniversalConfiguration>(
-        (ref) {
-  return UniversalConfigNotifier();
-});
+final universalConfigProvider =
+    AsyncNotifierProvider<UniversalConfigNotifier, UniversalConfiguration>(
+  UniversalConfigNotifier.new,
+);

@@ -30,16 +30,23 @@ class VideoPlayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final uriPlayController = ref.watch(uriPlayControllerProvider(uri));
-    if (uriPlayController.controller == null) {
-      return placeHolder ?? Container();
-    }
-    if (keepAspectRatio) {
-      return AspectRatio(
-        aspectRatio: uriPlayController.controller!.value.aspectRatio,
-        child: vplayer.VideoPlayer(uriPlayController.controller!),
-      );
-    }
-    return vplayer.VideoPlayer(uriPlayController.controller!);
+    final uriPlayControllerAsync = ref.watch(uriPlayControllerProvider(uri));
+    print('Rebuild VideoPlayer');
+    return uriPlayControllerAsync.when(
+      data: (uriPlayController) {
+        if (uriPlayController.controller == null) {
+          return placeHolder ?? Container();
+        }
+        if (keepAspectRatio) {
+          return AspectRatio(
+            aspectRatio: uriPlayController.controller!.value.aspectRatio,
+            child: vplayer.VideoPlayer(uriPlayController.controller!),
+          );
+        }
+        return vplayer.VideoPlayer(uriPlayController.controller!);
+      },
+      error: errorBuilder,
+      loading: loadingBuilder,
+    );
   }
 }

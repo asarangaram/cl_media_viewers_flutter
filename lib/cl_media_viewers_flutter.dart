@@ -1,6 +1,8 @@
 /// Media Viewers
 library;
 
+export 'src/config/models/persist_json.dart' show PersistJson;
+
 export 'src/image_viewer/image_viewer.dart' show ImageViewer, OverlayWidgets;
 export 'src/media_viewer.dart' show MediaViewer;
 export 'src/video_player/builders/get_play_controls.dart'

@@ -1,43 +1,42 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/persist_json.dart';
 import '../models/uri_config.dart';
+import 'persist_json.dart';
 
-class UriConfigNotifier extends StateNotifier<UriConfig> {
-  UriConfigNotifier(this.uri, [this.store])
-      : storeKey = 'MediaViewer: uri:  $uri',
-        super(const UriConfig()) {
-    initialize();
-  }
-  final Uri uri;
-  final PersistJson? store;
-  final String storeKey;
-  Future<void> initialize() async {
-    if (store != null) {
-      state = UriConfig.fromJson(
-        await store!.loadJson(
-          storeKey,
-          const UriConfig().toJson(),
-        ),
-      );
-    }
+class UriConfigNotifier extends FamilyAsyncNotifier<UriConfig, Uri> {
+  UriConfigNotifier();
+
+  String get storeKey => arg.toString();
+
+  @override
+  FutureOr<UriConfig> build(Uri arg) async {
+    final store = await ref.watch(internalJSONStoreprovider.future);
+    final json = await store.load(
+      storeKey,
+      const UriConfig().toJson(),
+    );
+    return UriConfig.fromJson(json);
   }
 
-  Future<void> update({
+  Future<void> onChange({
     int? quarterTurns,
     Duration? lastKnownPlayPosition,
   }) async {
-    state = state.copyWith(
-      quarterTurns: quarterTurns,
-      lastKnownPlayPosition: lastKnownPlayPosition,
+    if (quarterTurns == null && lastKnownPlayPosition == null) return;
+    final store = await ref.read(internalJSONStoreprovider.future);
+    state = AsyncValue.data(
+      state.value!.copyWith(
+        quarterTurns: quarterTurns,
+        lastKnownPlayPosition: lastKnownPlayPosition,
+      ),
     );
-    if (store != null) {
-      await store!.saveJson(storeKey, state.toJson());
-    }
+    await store.save(storeKey, state.value!.toJson());
   }
 }
 
 final uriConfigurationProvider =
-    StateNotifierProvider.family<UriConfigNotifier, UriConfig, Uri>((ref, uri) {
-  return UriConfigNotifier(uri);
-});
+    AsyncNotifierProvider.family<UriConfigNotifier, UriConfig, Uri>(
+  UriConfigNotifier.new,
+);

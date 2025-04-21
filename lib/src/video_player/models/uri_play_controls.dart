@@ -1,7 +1,10 @@
 abstract class UriPlayControls {
   Future<void> play();
   Future<void> pause();
-  Future<void> onPlayPause();
+  Future<void> onPlayPause({
+    required bool autoPlay,
+    required bool forced,
+  });
 }
 
 abstract class UniversalPlayControls {

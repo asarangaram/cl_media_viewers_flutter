@@ -9,18 +9,28 @@ import '../models/universal_video_controller.dart';
 import '../models/uri_play_controls.dart';
 
 class UniversalVideoControllerNotifier
-    extends StateNotifier<UniversalVideoController>
+    extends AutoDisposeAsyncNotifier<UniversalVideoController>
     implements UniversalPlayControls {
-  UniversalVideoControllerNotifier(this.ref)
-      : super(const UniversalVideoController());
-  Ref ref;
-  VideoPlayerController? controller;
+  UniversalVideoControllerNotifier();
+
+  @override
+  Future<UniversalVideoController> build() async {
+    ref.onDispose(dispose);
+    return const UniversalVideoController();
+  }
+
+  Future<void> dispose() async {
+    final controller = state.value!.controller;
+    await controller!.pause();
+    controller.removeListener(timestampUpdater);
+    await controller.dispose();
+  }
 
   @override
   Future<void> resetVideo({
     required bool autoPlay,
   }) async {
-    await setVideo(state.path!, autoPlay: autoPlay, forced: true);
+    await setVideo(state.value!.path!, autoPlay: autoPlay, forced: true);
   }
 
   @override
@@ -29,14 +39,16 @@ class UniversalVideoControllerNotifier
     required bool autoPlay,
     required bool forced,
   }) async {
-    if (!forced && state.path == uri) return;
-    state = state.copyWith(path: () => uri);
+    if (!forced && state.value!.path == uri) return;
+    if (state.value!.controller != null) {
+      final controller = state.value!.controller;
+      await controller!.pause();
+      controller.removeListener(timestampUpdater);
+      await controller.dispose();
+    }
+    state = const AsyncValue.loading();
     try {
-      if (controller != null) {
-        await controller!.pause();
-        controller!.removeListener(timestampUpdater);
-        await controller!.dispose();
-      }
+      VideoPlayerController? controller;
 
       if (uri.scheme == 'file') {
         final path = uri.toFilePath();
@@ -54,37 +66,38 @@ class UniversalVideoControllerNotifier
       } else {
         throw Exception('not supported');
       }
-      if (controller != null) {
-        await controller!.initialize();
-        if (!controller!.value.isInitialized) {
-          throw Exception('Failed to load Video');
-        }
-        await controller!.setVolume(
-          ref.read(universalConfigurationProvider).audioVolume,
-        );
-        await controller!.seekTo(
-          ref.read(uriConfigurationProvider(uri)).lastKnownPlayPosition,
-        );
-        if (autoPlay) {
-          await controller!.play();
-        }
-        controller!.addListener(timestampUpdater);
-        state = state.copyWith(controllerAsync: AsyncValue.data(controller!));
+      final universalConfig = await ref.read(universalConfigProvider.future);
+      final uriConfig = await ref.read(uriConfigurationProvider(uri).future);
+      await controller.initialize();
+      if (!controller.value.isInitialized) {
+        throw Exception('Failed to load Video');
       }
+      await controller.setVolume(universalConfig.audioVolume);
+      await controller.seekTo(uriConfig.lastKnownPlayPosition);
+
+      if (autoPlay) {
+        await controller.play();
+      }
+      controller.addListener(timestampUpdater);
+      state = AsyncValue.data(
+        state.value!.copyWith(controller: controller, path: () => uri),
+      );
     } catch (error, stackTrace) {
-      state = state.copyWith(controllerAsync: AsyncError(error, stackTrace));
+      state = AsyncValue.error(error, stackTrace);
     }
   }
 
-  void timestampUpdater() {
-    if (state.path != null) {
-      final uri = state.path!;
-      controller?.position.then((position) {
-        final laskKnownPosition =
-            ref.read(uriConfigurationProvider(uri)).lastKnownPlayPosition;
-        final diff = position! - laskKnownPosition;
+  Future<void> timestampUpdater() async {
+    if (state.value?.path != null && state.value?.controller != null) {
+      final controller = state.value!.controller!;
+
+      final uri = state.value!.path!;
+      final uriConfig = await ref.read(uriConfigurationProvider(uri).future);
+      await controller.position.then((position) {
+        final laskKnownPosition = uriConfig.lastKnownPlayPosition;
+        final diff = (position! - laskKnownPosition).abs();
         if (diff > const Duration(seconds: 1)) {
-          ref.read(uriConfigurationProvider(uri).notifier).update(
+          ref.read(uriConfigurationProvider(uri).notifier).onChange(
                 lastKnownPlayPosition: position,
               );
         }
@@ -94,62 +107,47 @@ class UniversalVideoControllerNotifier
 
   @override
   Future<void> removeVideo() async {
-    if (controller != null) {
-      await controller!.pause();
-      state = state.copyWith(
-        controllerAsync: const AsyncValue.loading(),
-        path: () => null,
-      );
-      await controller!.dispose();
+    if (state.value?.controller != null) {
+      final controller = state.value!.controller!;
+      await controller.pause();
+      state = const AsyncValue.loading();
+      await controller.dispose();
     }
   }
 
   @override
-  void dispose() {
-    if (mounted) {
-      if (controller?.value.isPlaying ?? false) {
-        controller?.pause();
-      }
-      controller!.removeListener(timestampUpdater);
-      controller?.dispose();
-      controller = null;
-      super.dispose();
-    }
-  }
+  Uri? get uri => state.value!.path;
 
   @override
-  Uri? get uri => state.path;
+  Future<void> onAdjustVolume(double value) async {
+    final curr = await ref.read(universalConfigProvider.future);
 
-  @override
-  Future<void> onAdjustVolume(
-    double value,
-  ) async {
-    final curr = ref.read(universalConfigurationProvider);
     if (curr.lastKnownVolume != value) {
       await ref
-          .read(universalConfigurationProvider.notifier)
-          .update(lastKnownVolume: value);
+          .read(universalConfigProvider.notifier)
+          .onChange(lastKnownVolume: value, isAudioMuted: value != 0);
     }
-    if (controller != null) {
-      await controller!.setVolume(value);
+    if (state.value!.controller != null) {
+      final controller = state.value!.controller!;
+      await controller.setVolume(curr.lastKnownVolume);
     }
   }
 
   @override
   Future<void> onToggleAudioMute() async {
-    final curr = ref.read(universalConfigurationProvider);
+    final curr = await ref.read(universalConfigProvider.future);
     final mute = !curr.isAudioMuted;
 
     await ref
-        .read(universalConfigurationProvider.notifier)
-        .update(isAudioMuted: mute);
-
-    await controller?.setVolume(mute ? 0 : curr.lastKnownVolume);
+        .read(universalConfigProvider.notifier)
+        .onChange(isAudioMuted: mute);
+    if (state.value!.controller != null) {
+      final controller = state.value!.controller!;
+      await controller.setVolume(mute ? 0 : curr.lastKnownVolume);
+    }
   }
 }
 
-final universalVideoControllerProvider = StateNotifierProvider<
-    UniversalVideoControllerNotifier, UniversalVideoController>((ref) {
-  final notifier = UniversalVideoControllerNotifier(ref);
-  return notifier;
-});
+final universalVideoControllerProvider = AsyncNotifierProvider.autoDispose<
+    UniversalVideoControllerNotifier,
+    UniversalVideoController>(UniversalVideoControllerNotifier.new);
