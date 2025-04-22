@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
 import '../models/video_player_controls.dart';
-import '../providers/video_manager.dart';
+import '../providers/video_player_state.dart';
 
 class GetUriPlayStatus extends ConsumerWidget {
   const GetUriPlayStatus({

@@ -1,81 +1,20 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:cl_media_viewers_flutter/src/image_viewer/overlay_widget.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../config/models/uri_config.dart';
 import '../config/providers/uri_config.dart';
 
-class OverlayWidgets extends StatelessWidget {
-  factory OverlayWidgets({
-    required Widget child,
-    required Alignment alignment,
-    double? widthFactor = 0.3,
-    double? heightFactor = 0.3,
-    BoxFit? fit,
-    Key? key,
-  }) {
-    return OverlayWidgets._(
-      alignment: alignment,
-      widthFactor: widthFactor,
-      heightFactor: heightFactor,
-      key: key,
-      fit: fit,
-      child: child,
-    );
-  }
-  factory OverlayWidgets.dimension({
-    required Widget child,
-    required Alignment alignment,
-    double? sizeFactor = 0.3,
-    Key? key,
-    BoxFit? fit,
-  }) {
-    return OverlayWidgets._(
-      alignment: alignment,
-      widthFactor: sizeFactor,
-      heightFactor: sizeFactor,
-      key: key,
-      fit: fit,
-      child: child,
-    );
-  }
-  const OverlayWidgets._({
-    required this.alignment,
-    required this.child,
-    super.key,
-    this.widthFactor,
-    this.heightFactor,
-    this.fit,
-  });
-  final Alignment alignment;
-  final Widget child;
-  final double? widthFactor;
-  final double? heightFactor;
-  final BoxFit? fit;
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: alignment,
-      child: FractionallySizedBox(
-        widthFactor: widthFactor,
-        heightFactor: heightFactor,
-        child: FittedBox(
-          fit: fit ?? BoxFit.contain,
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class ImageViewer extends StatelessWidget {
+class ImageViewer extends ConsumerWidget {
   factory ImageViewer.basic({
     required Uri uri,
-    required Widget? brokenImage,
-    required Widget? loadingWidget,
+    required Widget Function(Object, StackTrace) errorBuilder,
+    required Widget Function() loadingBuilder,
     required bool keepAspectRatio,
-    Widget? placeHolder,
     void Function({required bool lock})? onLockPage,
     Key? key,
     BoxFit? fit,
@@ -84,27 +23,23 @@ class ImageViewer extends StatelessWidget {
     return ImageViewer._(
       key: key,
       uri: uri,
-      autoStart: false,
-      autoPlay: false,
       isLocked: false,
       onLockPage: onLockPage,
-      placeHolder: placeHolder,
       fit: fit,
       overlays: overlays,
       hasGesture: false,
-      brokenImage: brokenImage,
-      loadingWidget: loadingWidget,
+      errorBuilder: errorBuilder,
+      loadingBuilder: loadingBuilder,
       keepAspectRatio: keepAspectRatio,
     );
   }
   factory ImageViewer.guesture({
     required Uri uri,
     required bool isLocked,
-    required Widget? brokenImage,
-    required Widget? loadingWidget,
+    required void Function({required bool lock}) onLockPage,
     required bool keepAspectRatio,
-    Widget? placeHolder,
-    void Function({required bool lock})? onLockPage,
+    required Widget Function(Object, StackTrace) errorBuilder,
+    required Widget Function() loadingBuilder,
     Key? key,
     BoxFit? fit,
     List<OverlayWidgets>? overlays,
@@ -112,113 +47,114 @@ class ImageViewer extends StatelessWidget {
     return ImageViewer._(
       key: key,
       uri: uri,
-      autoStart: false,
-      autoPlay: false,
       isLocked: isLocked,
       onLockPage: onLockPage,
-      placeHolder: placeHolder,
       fit: fit,
       overlays: overlays,
       hasGesture: true,
-      brokenImage: brokenImage,
-      loadingWidget: loadingWidget,
+      errorBuilder: errorBuilder,
+      loadingBuilder: loadingBuilder,
       keepAspectRatio: keepAspectRatio,
     );
   }
   const ImageViewer._({
     required this.uri,
-    required this.autoStart,
-    required this.autoPlay,
     required this.isLocked,
+    required this.onLockPage,
     required this.hasGesture,
-    required this.brokenImage,
-    required this.loadingWidget,
+    required this.errorBuilder,
+    required this.loadingBuilder,
     required this.keepAspectRatio,
     required this.overlays,
-    required this.onLockPage,
-    required this.placeHolder,
     super.key,
     this.fit,
   });
 
   final Uri uri;
-  final bool autoStart;
-  final bool autoPlay;
+
   final void Function({required bool lock})? onLockPage;
   final bool isLocked;
-  final Widget? placeHolder;
-  final Widget? brokenImage;
-  final Widget? loadingWidget;
+
+  final Widget Function(Object, StackTrace) errorBuilder;
+  final Widget Function() loadingBuilder;
   final bool keepAspectRatio;
 
   final BoxFit? fit;
-  //final GestureConfig Function(ExtendedImageState)? gestureControl;
   final List<OverlayWidgets>? overlays;
   final bool hasGesture;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final uriConfigAsync = ref.watch(uriConfigurationProvider(uri));
+
     final mode =
         hasGesture ? ExtendedImageMode.gesture : ExtendedImageMode.none;
-    final image = switch (uri.scheme) {
-      'file' => ExtendedImage.file(
-          File(uri.toFilePath()),
-          loadStateChanged: (ExtendedImageState state) {
-            if (state.extendedImageLoadState == LoadState.completed) {
-              return AspectRatioAware(
-                state: state,
-                image: state.imageProvider,
-                uri: uri,
-                fit: fit,
-                mode: mode,
-                initGestureConfigHandler: initGestureConfigHandler,
-                brokenImage:
-                    brokenImage ?? const Center(child: Icon(Icons.error)),
-                loadingWidget: loadingWidget ??
-                    const Center(child: CircularProgressIndicator()),
-                keepAspectRatio: keepAspectRatio,
-              );
-            } else if (state.extendedImageLoadState == LoadState.failed) {
-              return brokenImage ?? const Center(child: Icon(Icons.error));
-            }
-            return loadingWidget ??
-                const Center(child: CircularProgressIndicator());
-          },
-          fit: fit,
-          mode: mode,
-          initGestureConfigHandler:
-              hasGesture ? initGestureConfigHandler : null,
-        ),
-      _ => ExtendedImage.network(
-          uri.toString(),
-          loadStateChanged: (ExtendedImageState state) {
-            if (state.extendedImageLoadState == LoadState.completed) {
-              return AspectRatioAware(
-                state: state,
-                image: state.imageProvider,
-                uri: uri,
-                fit: fit,
-                mode: mode,
-                initGestureConfigHandler: initGestureConfigHandler,
-                brokenImage:
-                    brokenImage ?? const Center(child: Icon(Icons.error)),
-                loadingWidget: loadingWidget ??
-                    const Center(child: CircularProgressIndicator()),
-                keepAspectRatio: keepAspectRatio,
-              );
-            } else if (state.extendedImageLoadState == LoadState.failed) {
-              return brokenImage ?? const Center(child: Icon(Icons.error));
-            }
-            return loadingWidget ??
-                const Center(child: CircularProgressIndicator());
-          },
-          fit: fit,
-          mode: mode,
-          initGestureConfigHandler:
-              hasGesture ? initGestureConfigHandler : null,
-          cache: false,
-        )
-    };
+    final image = uriConfigAsync.when(
+      data: (uriConfig) {
+        return switch (uri.scheme) {
+          'file' => ExtendedImage.file(
+              File(uri.toFilePath()),
+              loadStateChanged: (ExtendedImageState state) =>
+                  switch (state.extendedImageLoadState) {
+                LoadState.loading => loadingBuilder(),
+                LoadState.completed => ImageFromState(
+                    state,
+                    errorBuilder: errorBuilder,
+                    loadingBuilder: loadingBuilder,
+                    keepAspectRatio: keepAspectRatio,
+                    uriConfig: uriConfig,
+                    fit: fit,
+                    mode: mode,
+                    initGestureConfigHandler:
+                        hasGesture ? initGestureConfigHandler : null,
+                  ),
+                LoadState.failed => runZonedGuarded(
+                    () {
+                      throw Exception('Error loading image $uri');
+                    },
+                    errorBuilder,
+                  ),
+              },
+              fit: fit,
+              mode: mode,
+              initGestureConfigHandler:
+                  hasGesture ? initGestureConfigHandler : null,
+            ),
+          _ => ExtendedImage.network(
+              uri.toString(),
+              loadStateChanged: (ExtendedImageState state) =>
+                  switch (state.extendedImageLoadState) {
+                LoadState.loading => loadingBuilder(),
+                LoadState.completed => ImageFromState(
+                    state,
+                    errorBuilder: errorBuilder,
+                    loadingBuilder: loadingBuilder,
+                    keepAspectRatio: keepAspectRatio,
+                    uriConfig: uriConfig,
+                    fit: fit,
+                    mode: mode,
+                    initGestureConfigHandler:
+                        hasGesture ? initGestureConfigHandler : null,
+                  ),
+                LoadState.failed => runZonedGuarded(
+                    () {
+                      throw Exception('Error loading image $uri');
+                    },
+                    errorBuilder,
+                  ),
+              },
+              fit: fit,
+              mode: mode,
+              initGestureConfigHandler:
+                  hasGesture ? initGestureConfigHandler : null,
+              cache: false,
+            )
+        };
+      },
+      error: errorBuilder,
+      loading: loadingBuilder,
+    );
+
     if (overlays?.isNotEmpty ?? false) {
       return Stack(
         children: [
@@ -245,108 +181,38 @@ class ImageViewer extends StatelessWidget {
   }
 }
 
-class ViewModifiedImage extends ConsumerWidget {
-  const ViewModifiedImage({
-    required this.image,
-    required this.uri,
-    required this.brokenImage,
-    required this.loadingWidget,
-    super.key,
-    this.fit,
-    this.mode,
-    this.initGestureConfigHandler,
-  });
-  final Uri uri;
-  final ImageProvider<Object> image;
-  final BoxFit? fit;
-  final ExtendedImageMode? mode;
-  final GestureConfig Function(ExtendedImageState)? initGestureConfigHandler;
-  final Widget brokenImage;
-  final Widget loadingWidget;
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final uriConfigAsync = ref.watch(uriConfigurationProvider(uri));
-
-    return uriConfigAsync.when(
-      data: (uriConfig) {
-        return RotatedBox(
-          quarterTurns: uriConfig.quarterTurns,
-          child: ExtendedImage(
-            image: image,
-            fit: fit,
-            mode: mode ?? ExtendedImageMode.none,
-            initGestureConfigHandler: initGestureConfigHandler,
-          ),
-        );
-      },
-      error: (_, __) => brokenImage,
-      loading: () => loadingWidget,
-    );
-
-    /* return uriConfigAsync.when(
-      data: (uriConfig) => controllerAsync.when(
-        data: (playControl) {
-          if (playControl.path != uri || playControl.controller == null) {
-            return placeHolder ?? Container();
-          }
-          print('uriConfig.quarterTurns: ${uriConfig.quarterTurns}');
-          final controller = playControl.controller;
-          if (keepAspectRatio) {
-            return AspectRatio(
-              aspectRatio: uriConfig.quarterTurns.isEven
-                  ? controller.value.aspectRatio
-                  : 1 / controller.value.aspectRatio,
-              child: RotatedBox(
-                quarterTurns: uriConfig.quarterTurns,
-                child: vplayer.VideoPlayer(controller),
-              ),
-            );
-          }
-          return vplayer.VideoPlayer(controller);
-        },
-        error: errorBuilder,
-        loading: loadingBuilder,
-      ),
-      error: errorBuilder,
-      loading: loadingBuilder,
-    ); */
-  }
-}
-
-class AspectRatioAware extends ConsumerWidget {
-  const AspectRatioAware({
-    required this.image,
-    required this.uri,
-    required this.brokenImage,
-    required this.loadingWidget,
-    required this.state,
+class ImageFromState extends ConsumerWidget {
+  const ImageFromState(
+    this.state, {
+    required this.errorBuilder,
+    required this.loadingBuilder,
     required this.keepAspectRatio,
+    required this.uriConfig,
+    required this.mode,
     super.key,
-    this.fit,
-    this.mode,
     this.initGestureConfigHandler,
+    this.fit,
   });
-  final Uri uri;
-  final ImageProvider<Object> image;
-  final BoxFit? fit;
-  final ExtendedImageMode? mode;
-  final GestureConfig Function(ExtendedImageState)? initGestureConfigHandler;
-  final Widget brokenImage;
-  final Widget loadingWidget;
-  final bool keepAspectRatio;
   final ExtendedImageState state;
+  final Widget Function(Object, StackTrace) errorBuilder;
+  final Widget Function() loadingBuilder;
+  final bool keepAspectRatio;
+  final UriConfig uriConfig;
+  final ExtendedImageMode mode;
+  final BoxFit? fit;
+  final GestureConfig Function(ExtendedImageState)? initGestureConfigHandler;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!keepAspectRatio) {
-      return ViewModifiedImage(
-        image: image,
-        uri: uri,
-        fit: fit,
-        mode: mode,
-        initGestureConfigHandler: initGestureConfigHandler,
-        brokenImage: brokenImage,
-        loadingWidget: loadingWidget,
+      return RotatedBox(
+        quarterTurns: uriConfig.quarterTurns,
+        child: ExtendedImage(
+          image: state.imageProvider,
+          fit: fit,
+          mode: mode,
+          initGestureConfigHandler: initGestureConfigHandler,
+        ),
       );
     }
     final imageInfo = state.extendedImageInfo;
@@ -356,14 +222,14 @@ class AspectRatioAware extends ConsumerWidget {
 
     return AspectRatio(
       aspectRatio: aspectRatio,
-      child: ViewModifiedImage(
-        image: image,
-        uri: uri,
-        fit: fit,
-        mode: mode,
-        initGestureConfigHandler: initGestureConfigHandler,
-        brokenImage: brokenImage,
-        loadingWidget: loadingWidget,
+      child: RotatedBox(
+        quarterTurns: uriConfig.quarterTurns,
+        child: ExtendedImage(
+          image: state.imageProvider,
+          fit: fit,
+          mode: mode,
+          initGestureConfigHandler: initGestureConfigHandler,
+        ),
       ),
     );
   }

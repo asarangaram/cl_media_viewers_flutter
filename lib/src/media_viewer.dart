@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'image_viewer/image_viewer.dart';
@@ -12,24 +14,26 @@ class MediaViewer extends StatelessWidget {
     required this.autoPlay,
     required this.heroTag,
     required this.mime,
-    required this.previewUri,
-    required this.brokenImage,
+    required this.errorBuilder,
+    required this.loadingBuilder,
     required this.decoration,
     required this.keepAspectRatio,
-    this.loadWidget,
     super.key,
+    this.previewUri,
   });
 
-  final void Function({required bool lock})? onLockPage;
+  final void Function({required bool lock}) onLockPage;
   final bool isLocked;
   final bool autoStart;
   final bool autoPlay;
   final Uri uri;
   final Uri? previewUri;
+
   final String heroTag;
   final String mime;
-  final Widget brokenImage;
-  final Widget? loadWidget;
+  final Widget Function(Object, StackTrace) errorBuilder;
+  final Widget Function() loadingBuilder;
+
   final Decoration? Function()? decoration;
   final bool keepAspectRatio;
 
@@ -46,74 +50,44 @@ class MediaViewer extends StatelessWidget {
         child: switch (mime) {
           (_) when mime.startsWith('image') => ImageViewer.guesture(
               uri: uri,
-              onLockPage: onLockPage,
               isLocked: isLocked,
-              brokenImage: brokenImage,
-              loadingWidget: loadWidget,
+              onLockPage: onLockPage,
               keepAspectRatio: keepAspectRatio,
+              errorBuilder: errorBuilder,
+              loadingBuilder: loadingBuilder,
             ),
           (_) when mime.startsWith('video') => VideoPlayer(
               uri: uri,
+              isLocked: isLocked,
+              onLockPage: onLockPage,
+              keepAspectRatio: keepAspectRatio,
               autoStart: autoStart,
               autoPlay: autoPlay,
-              onLockPage: onLockPage,
-              isLocked: isLocked,
-              placeHolder: previewUri == null
-                  ? null
-                  : ImageViewer.basic(
+              errorBuilder: errorBuilder,
+              loadingBuilder: () {
+                {
+                  if (previewUri != null) {
+                    return ImageViewer.basic(
                       uri: previewUri!,
-                      brokenImage: brokenImage,
-                      loadingWidget: loadWidget,
+                      errorBuilder: errorBuilder,
+                      loadingBuilder: loadingBuilder,
                       keepAspectRatio: keepAspectRatio,
-                    ),
-              errorBuilder: (_, __) => brokenImage,
-              loadingBuilder: () =>
-                  loadWidget ??
-                  LoadWidgetDefault(
-                    previewUri: previewUri,
-                    brokenImage: brokenImage,
-                    loadWidget: loadWidget,
-                    keepAspectRatio: keepAspectRatio,
-                  ),
-              keepAspectRatio: keepAspectRatio,
+                    );
+                  }
+                  return const CircularProgressIndicator(
+                    color: Colors.white,
+                  );
+                }
+              },
             ),
-          _ => brokenImage,
+          _ => runZonedGuarded(
+              () {
+                throw Exception('unsupported MIME');
+              },
+              errorBuilder,
+            ),
         },
       ),
-    );
-  }
-}
-
-class LoadWidgetDefault extends StatelessWidget {
-  const LoadWidgetDefault({
-    required this.previewUri,
-    required this.brokenImage,
-    required this.loadWidget,
-    required this.keepAspectRatio,
-    super.key,
-  });
-
-  final Uri? previewUri;
-  final Widget brokenImage;
-  final Widget? loadWidget;
-  final bool keepAspectRatio;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        if (previewUri != null)
-          ImageViewer.basic(
-            uri: previewUri!,
-            brokenImage: brokenImage,
-            loadingWidget: null,
-            keepAspectRatio: keepAspectRatio,
-          ),
-        const CircularProgressIndicator(
-          color: Colors.white,
-        ),
-      ],
     );
   }
 }

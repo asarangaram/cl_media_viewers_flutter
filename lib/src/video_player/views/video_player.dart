@@ -1,33 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart' as vplayer;
 
 import '../../config/providers/uri_config.dart';
-import '../providers/video_manager.dart';
+import '../providers/video_player_state.dart';
 
 class VideoPlayer extends ConsumerWidget {
   const VideoPlayer({
     required this.uri,
-    required this.autoStart,
-    required this.autoPlay,
     required this.isLocked,
-    required this.placeHolder,
+    required this.onLockPage,
     required this.errorBuilder,
     required this.loadingBuilder,
     required this.keepAspectRatio,
+    required this.autoStart,
+    required this.autoPlay,
     super.key,
-    this.onLockPage,
   });
   final Uri uri;
-  final bool autoStart;
-  final bool autoPlay;
-  final void Function({required bool lock})? onLockPage;
   final bool isLocked;
+  final void Function({required bool lock})? onLockPage;
   final bool keepAspectRatio;
-
-  final Widget? placeHolder;
   final Widget Function(Object, StackTrace) errorBuilder;
   final Widget Function() loadingBuilder;
+  final bool autoStart;
+  final bool autoPlay;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,7 +36,7 @@ class VideoPlayer extends ConsumerWidget {
       data: (uriConfig) => controllerAsync.when(
         data: (playControl) {
           if (playControl.path != uri || playControl.controller == null) {
-            return placeHolder ?? Container();
+            return loadingBuilder();
           }
           final controller = playControl.controller!;
           if (keepAspectRatio) {
