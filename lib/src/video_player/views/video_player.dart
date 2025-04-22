@@ -40,7 +40,6 @@ class VideoPlayer extends ConsumerWidget {
           if (playControl.path != uri || playControl.controller == null) {
             return placeHolder ?? Container();
           }
-          print('uriConfig.quarterTurns: ${uriConfig.quarterTurns}');
           final controller = playControl.controller!;
           if (keepAspectRatio) {
             return AspectRatio(
