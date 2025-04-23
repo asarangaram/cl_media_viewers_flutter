@@ -6,7 +6,7 @@ import 'package:cl_media_viewers_flutter/src/image_viewer/overlay_widget.dart';
 import 'package:cl_media_viewers_flutter/src/media_viewer.dart';
 import 'package:cl_media_viewers_flutter/src/video_player/builders/get_uri_play_status.dart';
 import 'package:cl_media_viewers_flutter/src/video_player/builders/get_video_player_controls.dart';
-import 'package:cl_media_viewers_flutter/src/video_player/views/media_fullscreen_view.dart';
+import 'package:cl_media_viewers_flutter/src/video_player/views/media_player_controller.dart';
 import 'package:cl_media_viewers_flutter/src/video_player/views/video_player.dart';
 
 /// Implements Widgets required to play Media.
@@ -44,6 +44,6 @@ export 'src/video_player/builders/get_video_player_controls.dart'
     show GetVideoPlayerControls;
 export 'src/video_player/models/video_player_controls.dart'
     show VideoPlayerControls;
-export 'src/video_player/views/media_fullscreen_view.dart'
+export 'src/video_player/views/media_player_controller.dart'
     show MediaPlayerControls;
 export 'src/video_player/views/video_player.dart' show VideoPlayer;
