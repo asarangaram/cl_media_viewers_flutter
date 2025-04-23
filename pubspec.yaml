@@ -1,7 +1,7 @@
 name: cl_media_viewers_flutter
 description: "A new Flutter package project."
 version: 0.0.1
-
+publish_to: none
 environment:
   sdk: ">=3.0.0 <4.0.0"
 
@@ -13,6 +13,8 @@ dependencies:
   material_design_icons_flutter: ^7.0.7296
   path: ^1.9.0
   path_provider: ^2.1.5
+  shadcn_ui:
+    path: /Users/anandasarangaram/Work/flutter-shadcn-ui
   shared_preferences: ^2.5.3
   sqlite_async: ^0.11.1
   video_player: ^2.9.1
