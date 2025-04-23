@@ -10,8 +10,8 @@ import 'controls/toggle_fullscreen.dart';
 import 'controls/video_progress.dart';
 import 'media_background.dart';
 
-class EntityFullScreenView extends ConsumerWidget {
-  const EntityFullScreenView({
+class MediaPlayerControls extends ConsumerWidget {
+  const MediaPlayerControls({
     required this.uri,
     required this.child,
     required this.mime,
