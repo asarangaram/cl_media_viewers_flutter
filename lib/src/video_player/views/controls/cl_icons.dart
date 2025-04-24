@@ -10,6 +10,7 @@ class VideoPlayerIcons {
   final playerStop = Icons.stop;
   final fullscreenExit = MdiIcons.fullscreenExit;
   final fullscreen = MdiIcons.fullscreen;
+  final playerClose = MdiIcons.close;
 }
 
 VideoPlayerIcons videoPlayerIcons = VideoPlayerIcons();

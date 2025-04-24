@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../basics/widgets/cl_button.dart';
 import '../../config/providers/show_controls.dart';
 import '../../media_viewer.dart';
 import '../builders/get_video_player_controls.dart';
+import 'controls/cl_icons.dart';
 import 'controls/on_toggle_audio_mute.dart';
 import 'controls/on_toggle_play.dart';
 import 'controls/toggle_fullscreen.dart';
@@ -16,11 +18,13 @@ class MediaPlayerControls extends ConsumerWidget {
     required this.uri,
     required this.child,
     required this.mime,
+    required this.onClose,
     super.key,
   });
   final Uri uri;
   final MediaViewer child;
   final String mime;
+  final void Function()? onClose;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -90,15 +94,25 @@ class MediaPlayerControls extends ConsumerWidget {
                                         right: 0,
                                         child: VideoProgress(uri: uri),
                                       ),
-                                      const Positioned(
+                                      //if (onClose != null)
+                                      Positioned(
                                         top: 8,
                                         right: 8,
-                                        child: OnToggleFullScreen(),
+                                        child: OnExitMediaView(
+                                          onClose: onClose!,
+                                        ),
                                       ),
                                       Positioned(
                                         top: 8,
                                         left: 8,
-                                        child: OnToggleAudioMute(uri: uri),
+                                        child: Column(
+                                          spacing: 12,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            OnToggleAudioMute(uri: uri),
+                                            const OnToggleFullScreen(),
+                                          ],
+                                        ),
                                       ),
                                       Positioned(
                                         top: 4,
@@ -137,6 +151,29 @@ class MediaPlayerControls extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class OnExitMediaView extends ConsumerWidget {
+  const OnExitMediaView({
+    required this.onClose,
+    super.key,
+  });
+  final void Function() onClose;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8),
+        child: CLButtonIcon.small(
+          videoPlayerIcons.playerClose,
+          onTap: onClose,
+          color: ShadTheme.of(context).colorScheme.background,
+        ),
       ),
     );
   }
