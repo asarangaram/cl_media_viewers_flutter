@@ -8,8 +8,8 @@ import 'package:video_player/video_player.dart';
 
 import '../../../basics/models/cl_scale_type.dart';
 import '../../../basics/models/utils.dart';
-import '../../../config/providers/show_controls.dart';
 import '../../builders/get_uri_play_status.dart';
+import 'cl_icons.dart';
 import 'on_rotate.dart';
 
 extension ExtDuration on Duration {
@@ -61,8 +61,7 @@ class _VideoProgressState extends ConsumerState<VideoProgress> {
   double? seekValue;
   @override
   Widget build(BuildContext context) {
-    final isFullScreen =
-        ref.watch(showControlsProvider.select((e) => e.isFullScreen));
+    final showBuffering = !widget.uri.isScheme('file');
     return GetUriPlayStatus(
       uri: widget.uri,
       builder: ([playerControls, playStatus]) {
@@ -71,18 +70,12 @@ class _VideoProgressState extends ConsumerState<VideoProgress> {
         }
         return LayoutBuilder(
           builder: (context, constraints) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: isFullScreen ? BorderRadius.circular(12) : null,
-              ),
-              margin: isFullScreen ? const EdgeInsets.all(8) : null,
-              padding: const EdgeInsets.all(8),
+            return MenuBackground(
               child: ShadTheme(
                 data: ShadTheme.of(context).copyWith(
                   textTheme: ShadTheme.of(context).textTheme.copyWith(
                         small: ShadTheme.of(context).textTheme.small.copyWith(
-                              color: Colors.white,
+                              color: playerUIPreferences.foregroundColor,
                               fontSize: 10,
                             ),
                       ),
@@ -110,7 +103,8 @@ class _VideoProgressState extends ConsumerState<VideoProgress> {
                               child: Stack(
                                 children: [
                                   // required only for network
-                                  if (!widget.uri.isScheme('file'))
+
+                                  if (showBuffering)
                                     SliderTheme(
                                       data: SliderTheme.of(context).copyWith(
                                         overlayShape: const SmallOverlayShape(),
@@ -119,19 +113,10 @@ class _VideoProgressState extends ConsumerState<VideoProgress> {
                                         thumbShape:
                                             SliderComponentShape.noThumb,
                                         disabledActiveTrackColor:
-                                            const Color.fromARGB(
-                                          255,
-                                          128,
-                                          128,
-                                          128,
-                                        ),
+                                            playerUIPreferences
+                                                .activeBufferColor,
                                         disabledInactiveTrackColor:
-                                            const Color.fromARGB(
-                                          255,
-                                          64,
-                                          64,
-                                          64,
-                                        ),
+                                            playerUIPreferences.inactiveColor,
                                       ),
                                       child: Slider(
                                         max: playStatus.durationInSeconds,
@@ -149,21 +134,11 @@ class _VideoProgressState extends ConsumerState<VideoProgress> {
                                         enabledThumbRadius: 6,
                                         pressedElevation: 2,
                                       ),
-                                      activeTrackColor: const Color.fromARGB(
-                                        255,
-                                        224,
-                                        224,
-                                        224,
-                                      ),
-                                      inactiveTrackColor:
-                                          (!widget.uri.isScheme('file'))
-                                              ? const Color.fromARGB(0, 0, 0, 0)
-                                              : const Color.fromARGB(
-                                                  255,
-                                                  64,
-                                                  64,
-                                                  64,
-                                                ),
+                                      activeTrackColor:
+                                          playerUIPreferences.foregroundColor,
+                                      inactiveTrackColor: showBuffering
+                                          ? const Color.fromARGB(0, 0, 0, 0)
+                                          : playerUIPreferences.inactiveColor,
                                       thumbColor: Colors.red,
                                     ),
                                     child: Slider(
@@ -193,6 +168,7 @@ class _VideoProgressState extends ConsumerState<VideoProgress> {
                                   .muted
                                   .copyWith(
                                     fontSize: CLScaleType.tiny.fontSize,
+                                    color: playerUIPreferences.foregroundColor,
                                   ),
                             ),
                           ),
@@ -255,5 +231,26 @@ class SmallOverlayShape extends SliderComponentShape {
       ..color = sliderTheme.overlayColor?.withValues(alpha: 255 * 0.2) ??
           Colors.grey.withValues(alpha: 255 * 0.2);
     context.canvas.drawCircle(center, size / 2, paint);
+  }
+}
+
+class MenuBackground extends ConsumerWidget {
+  const MenuBackground({required this.child, super.key});
+  final Widget child;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    const foregroundColor = Color.fromARGB(192, 0xFF, 0xFF, 0xFF);
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(192, 96, 96, 96),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: foregroundColor,
+        ),
+      ),
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8),
+      child: child,
+    );
   }
 }

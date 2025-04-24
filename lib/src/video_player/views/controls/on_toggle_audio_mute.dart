@@ -24,8 +24,8 @@ class OnToggleAudioMute extends StatelessWidget {
         {
           return CLButtonIcon.small(
             playStatus.volume == 0
-                ? videoPlayerIcons.audioMuted
-                : videoPlayerIcons.audioUnmuted,
+                ? playerUIPreferences.audioMuted
+                : playerUIPreferences.audioUnmuted,
             onTap: playerControls.onToggleAudioMute,
             color: playStatus.volume == 0
                 ? ShadTheme.of(context).colorScheme.destructive

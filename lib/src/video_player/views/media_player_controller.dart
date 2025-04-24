@@ -98,20 +98,24 @@ class MediaPlayerControls extends ConsumerWidget {
                                       Positioned(
                                         top: 8,
                                         right: 8,
-                                        child: OnExitMediaView(
-                                          onClose: onClose!,
+                                        child: MenuBackground(
+                                          child: OnExitMediaView(
+                                            onClose: onClose!,
+                                          ),
                                         ),
                                       ),
                                       Positioned(
                                         top: 8,
                                         left: 8,
-                                        child: Column(
-                                          spacing: 12,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            OnToggleAudioMute(uri: uri),
-                                            const OnToggleFullScreen(),
-                                          ],
+                                        child: MenuBackground(
+                                          child: Column(
+                                            spacing: 12,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              OnToggleAudioMute(uri: uri),
+                                              const OnToggleFullScreen(),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                       Positioned(
@@ -136,7 +140,22 @@ class MediaPlayerControls extends ConsumerWidget {
                                       ),
                                     ],
                                   (_) when mime.startsWith('image') => [
-                                      const SizedBox.shrink(),
+                                      Positioned(
+                                        top: 8,
+                                        right: 8,
+                                        child: MenuBackground(
+                                          child: OnExitMediaView(
+                                            onClose: onClose!,
+                                          ),
+                                        ),
+                                      ),
+                                      const Positioned(
+                                        top: 8,
+                                        left: 8,
+                                        child: MenuBackground(
+                                          child: OnToggleFullScreen(),
+                                        ),
+                                      ),
                                     ],
                                   _ => [const SizedBox.shrink()],
                                 },
@@ -167,13 +186,10 @@ class OnExitMediaView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Align(
       alignment: Alignment.centerRight,
-      child: Padding(
-        padding: const EdgeInsets.only(left: 8),
-        child: CLButtonIcon.small(
-          videoPlayerIcons.playerClose,
-          onTap: onClose,
-          color: ShadTheme.of(context).colorScheme.background,
-        ),
+      child: CLButtonIcon.small(
+        playerUIPreferences.playerClose,
+        onTap: onClose,
+        color: ShadTheme.of(context).colorScheme.background,
       ),
     );
   }

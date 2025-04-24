@@ -14,11 +14,14 @@ class OnToggleFullScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final showControl = ref.watch(showControlsProvider);
-    return CLButtonIcon.small(
+    return CLButtonIcon.standard(
       showControl.isFullScreen
-          ? videoPlayerIcons.fullscreenExit
-          : videoPlayerIcons.fullscreen,
-      onTap: ref.read(showControlsProvider.notifier).fullScreenToggle,
+          ? playerUIPreferences.fullscreenExit
+          : playerUIPreferences.fullscreen,
+      onTap: () {
+        ref.read(showControlsProvider.notifier).briefHover();
+        ref.read(showControlsProvider.notifier).fullScreenToggle();
+      },
       color: ShadTheme.of(context).colorScheme.background,
     );
   }

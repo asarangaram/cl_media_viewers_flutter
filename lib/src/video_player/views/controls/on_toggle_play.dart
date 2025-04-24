@@ -24,8 +24,8 @@ class OnTogglePlay extends StatelessWidget {
         {
           return CLButtonIcon.standard(
             playStatus.isPlaying
-                ? videoPlayerIcons.playerPause
-                : videoPlayerIcons.playerPlay,
+                ? playerUIPreferences.playerPause
+                : playerUIPreferences.playerPlay,
             onTap: () => {
               playerControls.onPlayPause(
                 autoPlay: false,
